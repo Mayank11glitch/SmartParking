@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Smart Parking — My Reservations</title>
+    <link rel="stylesheet" href="styles.css">
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCHrwLfSCIuLvC7VqhpX-u_jUaW2AwDauU",
+            authDomain: "smartparkingfinal-8c79e.firebaseapp.com",
+            databaseURL: "https://smartparkingfinal-8c79e-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "smartparkingfinal-8c79e",
+            storageBucket: "smartparkingfinal-8c79e.firebasestorage.app",
+            messagingSenderId: "855138079664",
+            appId: "1:855138079664:web:78fd5da08725e5d9abbc75"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        window.database = database;
+        console.log("🔥 Firebase initialized in myreservations.html", database);
+    </script>
+
+</head>
+
+<body>
+
+    <div class="bg-blob blob-1" style="opacity: 0.2;"></div>
+    <div class="bg-blob blob-2" style="opacity: 0.2;"></div>
+
+    <header>
+        <div class="container">
+            <div class="brand">
+                <div class="brand-logo">SP</div>
+                <div>
+                    <div>Smart Parking</div>
+                    <div style="font-size:0.8rem;color:var(--text-muted);font-weight:400">My Reservations</div>
+                </div>
+            </div>
+            <div style="display:flex;gap:12px;">
+                <button class="btn btn-outline" onclick="window.location.href='dashboard.html'">Dashboard</button>
+                <button class="btn btn-outline" onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="glass-panel" style="padding: 32px; border-radius:16px; margin-top:40px;">
+            <div
+                style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:16px;">
+                <div>
+                    <h1 style="font-size:1.8rem;">My Reservations</h1>
+                    <p style="color:var(--text-muted);">Manage your upcoming and past bookings.</p>
+                </div>
+                <div style="color:var(--text-muted);font-size:0.9rem;">Total: <strong id="totalCount"
+                        style="color:white">0</strong></div>
+            </div>
+
+            <div class="glass-panel"
+                style="padding:16px; border-radius:12px; display:flex; gap:12px; margin-bottom:24px; background:rgba(255,255,255,0.02);">
+                <input id="q" class="form-control" placeholder="Search by spot, date, vehicle..." style="flex:1;">
+                <select id="filterStatus" class="form-control" style="width:auto;min-width:140px;">
+                    <option value="all">All</option>
+                    <option value="upcoming">Upcoming</option>
+                    <option value="past">Past</option>
+                </select>
+            </div>
+
+            <div id="list" style="display:flex;flex-direction:column;gap:16px;"></div>
+            <div id="empty" style="padding:40px;text-align:center;color:var(--text-muted);display:none">No reservations
+                found.</div>
+        </div>
+    </main>
+
+    <div id="toast"></div>
+
+    <script>
+        function toast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.style.opacity = 1;
+            t.style.transform = 'translateY(0)';
+            setTimeout(function () {
+                t.style.opacity = 0;
+                t.style.transform = 'translateY(-20px)';
+            }, 2200);
+        }
+
+        // 🔥 FIREBASE TIMER FUNCTIONS
+        async function fetchSlotTimerData(spotId, reservationId, timerDiv) {
+            console.log('🔍 Fetching timer data for spot:', spotId, 'reservation:', reservationId);
+            console.log('   window.database exists:', !!window.database);
+
+            if (!window.database) {
+                console.error('❌ Firebase database not available!');
+                // Wait a bit and retry once
+                setTimeout(async () => {
+                    console.log('🔄 Retrying Firebase connection...');
+                    if (window.database) {
+                        await fetchSlotTimerData(spotId, reservationId, timerDiv);
+                    } else {
+                        timerDiv.innerHTML = '<div style="color:#eab308;font-size:0.9rem;">⏳ Loading...</div>';
+                    }
+                }, 1000);
+                return;
+            }
+
+            try {
+                console.log('📦 Importing Firebase functions...');
+                const { ref, get } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js");
+
+                console.log('📡 Fetching slot data from Firebase...');
+                const slotRef = ref(window.database, "slots/" + spotId);
+                const snapshot = await get(slotRef);
+
+                console.log('📊 Slot snapshot exists:', snapshot.exists());
+
+                if (!snapshot.exists()) {
+                    console.warn('⚠️ Slot not found in Firebase:', spotId);
+                    timerDiv.innerHTML = '<div style="color:var(--text-muted);font-size:0.9rem;">Slot not found</div>';
+                    return;
+                }
+
+                const slotData = snapshot.val();
+                console.log('✅ Slot data:', slotData);
+
+                const timerActive = slotData.timerActive || false;
+                const startTime = slotData.startTime || 0;
+                const durationMin = slotData.durationMin || 0;
+                const isBooked = slotData.booked || false;
+
+                console.log('   isBooked:', isBooked, 'timerActive:', timerActive, 'startTime:', startTime, 'durationMin:', durationMin);
+
+                if (!isBooked) {
+                    // Booking was cancelled
+                    console.log('❌ Booking cancelled');
+                    timerDiv.innerHTML = '<div style="color:#ef4444;font-size:0.9rem;font-weight:600;">❌ CANCELLED</div>';
+                    return;
+                }
+
+                if (!timerActive || startTime === 0) {
+                    // Waiting for car to arrive
+                    console.log('⏳ Waiting for car to arrive');
+                    const waitingLabel = document.createElement('div');
+                    waitingLabel.style.cssText = 'font-size:0.75rem;color:var(--text-muted);margin-bottom:4px;';
+                    waitingLabel.textContent = 'Status';
+
+                    const waitingValue = document.createElement('div');
+                    waitingValue.style.cssText = 'font-size:0.95rem;color:#eab308;font-weight:600;';
+                    waitingValue.textContent = '⏳ Waiting for car...';
+
+                    timerDiv.appendChild(waitingLabel);
+                    timerDiv.appendChild(waitingValue);
+                } else {
+                    // Timer is active - show countdown
+                    console.log('⏱️ Timer is active, starting countdown');
+                    const timerLabel = document.createElement('div');
+                    timerLabel.style.cssText = 'font-size:0.75rem;color:var(--text-muted);margin-bottom:4px;';
+                    timerLabel.textContent = 'Time Remaining';
+
+                    const timerValue = document.createElement('div');
+                    timerValue.id = 'timer-' + reservationId;
+                    timerValue.style.cssText = 'font-size:1.2rem;font-weight:700;font-family:monospace;min-height:30px;';
+
+                    timerDiv.appendChild(timerLabel);
+                    timerDiv.appendChild(timerValue);
+
+                    // Start the countdown
+                    startFirebaseTimer(reservationId, startTime, durationMin);
+                }
+            } catch (error) {
+                console.error('❌ Error fetching timer data:', error);
+                console.error('   Error stack:', error.stack);
+                timerDiv.innerHTML = '<div style="color:#ef4444;font-size:0.9rem;">Error loading timer</div>';
+            }
+        }
+
+        function startFirebaseTimer(reservationId, startTime, durationMin) {
+            const timerEl = document.getElementById('timer-' + reservationId);
+            if (!timerEl) return;
+
+            function tick() {
+                const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
+                const elapsedSec = currentTime - startTime;
+                const totalSec = durationMin * 60;
+                const remainingSec = totalSec - elapsedSec;
+
+                if (remainingSec <= 0) {
+                    timerEl.textContent = '00:00:00';
+                    timerEl.style.color = '#ef4444';
+                    return;
+                }
+
+                // Calculate hours, minutes, seconds
+                const hours = Math.floor(remainingSec / 3600);
+                const minutes = Math.floor((remainingSec % 3600) / 60);
+                const seconds = remainingSec % 60;
+
+                // Format as HH:MM:SS
+                const formatted =
+                    String(hours).padStart(2, '0') + ':' +
+                    String(minutes).padStart(2, '0') + ':' +
+                    String(seconds).padStart(2, '0');
+
+                timerEl.textContent = formatted;
+
+                // Update color based on remaining time
+                const remainingMin = remainingSec / 60;
+                if (remainingMin > 30) {
+                    timerEl.style.color = '#22c55e'; // green
+                } else if (remainingMin > 10) {
+                    timerEl.style.color = '#eab308'; // yellow
+                } else {
+                    timerEl.style.color = '#ef4444'; // red
+                }
+            }
+
+            // Initial tick
+            tick();
+
+            // Update every second
+            setInterval(tick, 1000);
+        }
+
+        const current = JSON.parse(localStorage.getItem('sp_current_user_v1') || 'null');
+        if (!current) { window.location.href = 'login.html'; }
+
+        const key = 'sp_reservations_v1';
+        function loadReservations() {
+            const all = JSON.parse(localStorage.getItem(key) || '[]');
+            const mine = all.filter(function (r) { return String(r.userId) === String(current.id); });
+            return mine.sort(function (a, b) { return new Date(b.created) - new Date(a.created); });
+        }
+
+        function render() {
+            const listEl = document.getElementById('list');
+            listEl.innerHTML = '';
+            const q = (document.getElementById('q').value || '').trim().toLowerCase();
+            const status = document.getElementById('filterStatus').value;
+            const items = loadReservations();
+            const now = Date.now();
+
+            const filtered = items.filter(function (r) {
+                if (r.status === 'cancelled') return false;
+                const start = Date.parse(r.date + 'T' + r.time);
+                const end = start + (r.hours || 1) * 3600000;
+                if (status === 'upcoming' && end < now) return false;
+                if (status === 'past' && end >= now) return false;
+                if (!q) return true;
+                const hay = (r.spot + ' ' + r.date + ' ' + r.time + ' ' + r.vehicle + ' ' + (r.userName || '')).toLowerCase();
+                return hay.includes(q);
+            });
+
+            document.getElementById('totalCount').textContent = filtered.length;
+            if (filtered.length === 0) {
+                document.getElementById('empty').style.display = 'block';
+                return;
+            }
+            else document.getElementById('empty').style.display = 'none';
+
+            filtered.forEach(function (r) {
+                const el = document.createElement('div');
+                el.className = 'glass-panel';
+                el.style.cssText = 'padding:20px; border-radius:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:20px;';
+
+                const spotBox = document.createElement('div');
+                spotBox.style.cssText = 'width:60px;height:60px;background:var(--primary-gradient);border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:700;color:white;font-size:1.1rem;box-shadow:0 4px 12px rgba(124,92,255,0.3);';
+                spotBox.textContent = r.spot;
+
+                const detailsDiv = document.createElement('div');
+                const dateDiv = document.createElement('div');
+                dateDiv.style.cssText = 'font-weight:600;font-size:1.1rem;margin-bottom:4px;';
+                dateDiv.textContent = r.date + ' at ' + r.time;
+
+                const infoDiv = document.createElement('div');
+                infoDiv.style.cssText = 'color:var(--text-muted);font-size:0.9rem;';
+                infoDiv.innerHTML = 'Vehicle: <span style="color:white">' + r.vehicle + '<' + '/span> • Duration: ' + r.hours + 'h • Floor: ' + (r.floor || '—');
+
+                detailsDiv.appendChild(dateDiv);
+                detailsDiv.appendChild(infoDiv);
+
+                const leftDiv = document.createElement('div');
+                leftDiv.style.cssText = 'display:flex;gap:20px;align-items:center;flex:1;';
+                leftDiv.appendChild(spotBox);
+                leftDiv.appendChild(detailsDiv);
+
+
+                // ⏱️ TIMER SECTION - Uses Firebase data from ESP32
+                const timerDiv = document.createElement('div');
+                timerDiv.style.cssText = 'text-align:center;min-width:120px;';
+                timerDiv.id = 'timer-container-' + r.id;
+
+                // Fetch Firebase slot data for this reservation
+                fetchSlotTimerData(r.spot, r.id, timerDiv);
+
+                const btnDiv = document.createElement('div');
+                btnDiv.style.cssText = 'display:flex;gap:10px;';
+
+                const ticketBtn = document.createElement('button');
+                ticketBtn.className = 'btn btn-outline';
+                ticketBtn.style.cssText = 'padding:8px 16px;font-size:0.9rem;';
+                ticketBtn.textContent = 'Ticket';
+                ticketBtn.onclick = function () { viewTicket(r.id); };
+
+                const printBtn = document.createElement('button');
+                printBtn.className = 'btn btn-outline';
+                printBtn.style.cssText = 'padding:8px 16px;font-size:0.9rem;';
+                printBtn.textContent = 'Print';
+                printBtn.onclick = function () { printReservation(r.id); };
+
+                const cancelBtn = document.createElement('button');
+                cancelBtn.className = 'btn btn-outline';
+                cancelBtn.style.cssText = 'padding:8px 16px;font-size:0.9rem;border-color:rgba(239,68,68,0.3);color:#fca5a5;';
+                cancelBtn.textContent = 'Cancel';
+                cancelBtn.onclick = function () { cancelReservation(r.id); };
+
+                btnDiv.appendChild(ticketBtn);
+                btnDiv.appendChild(printBtn);
+                btnDiv.appendChild(cancelBtn);
+
+                el.appendChild(leftDiv);
+                el.appendChild(timerDiv);
+                el.appendChild(btnDiv);
+                listEl.appendChild(el);
+            });
+        }
+
+
+
+        function findReservation(id) {
+            const all = JSON.parse(localStorage.getItem(key) || '[]');
+            return all.find(function (r) { return r.id === id; });
+        }
+
+        function viewTicket(id) {
+            const r = findReservation(id);
+            if (!r) return toast('Reservation not found');
+            const payload = encodeURIComponent('RES|' + r.id + '|' + r.spot);
+            const qr = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + payload;
+            const w = window.open('', '_blank', 'width=450,height=650');
+
+            const html = [
+                '<html><head><title>Ticket<', '/title>',
+                '<style>body{font-family:sans-serif;background:#0c1320;color:white;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;}',
+                '.ticket{background:white;color:black;padding:30px;border-radius:16px;text-align:center;width:300px;}<', '/style><', '/head>',
+                '<body>',
+                '<div class="ticket">',
+                '<h2 style="margin:0 0 20px;">Smart Parking<', '/h2>',
+                '<div style="margin-bottom:20px;font-size:3rem;font-weight:800;color:#7c5cff;">' + r.spot + '<', '/div>',
+                '<p><strong>' + r.date + '<', '/strong> at <strong>' + r.time + '<', '/strong><', '/p>',
+                '<p>Duration: ' + r.hours + ' hours<', '/p>',
+                '<img src="' + qr + '" style="width:200px;height:200px;margin:20px 0;">',
+                '<p style="font-size:0.8rem;color:#666;">ID: ' + r.id + '<', '/p>',
+                '<', '/div>',
+                '<', '/body><', '/html>'
+            ].join('');
+
+            w.document.write(html);
+            w.document.close();
+        }
+
+        function printReservation(id) {
+            const r = findReservation(id);
+            if (!r) return;
+            viewTicket(id);
+        }
+
+        async function cancelReservation(id) {
+            if (!confirm('Cancel this reservation?')) return;
+
+            const all = JSON.parse(localStorage.getItem(key) || '[]');
+            const idx = all.findIndex(function (r) { return r.id === id; });
+            if (idx === -1) {
+                toast('Reservation not found');
+                return;
+            }
+
+            const reservation = all[idx];
+            console.log('📋 Cancelling reservation:', reservation);
+
+            // Update localStorage
+            all[idx].status = 'cancelled';
+            localStorage.setItem(key, JSON.stringify(all));
+
+            // 🔥 Update Firebase
+            try {
+                if (window.database) {
+                    const { ref, get, update, remove } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js");
+
+                    // Map spot ID to slot key
+                    // Map spot ID to slot key
+                    function getSlotKey(spotId) {
+                        // Firebase keys match the Spot IDs directly
+                        return spotId;
+                    }
+
+                    const slotKey = getSlotKey(reservation.spot);
+                    console.log('🔑 Slot key:', slotKey, 'for spot:', reservation.spot);
+
+                    if (slotKey) {
+                        // 1️⃣ Clear slot booking and timer data
+                        const slotRef = ref(window.database, "slots/" + slotKey);
+                        const slotSnap = await get(slotRef);
+
+                        if (slotSnap.exists()) {
+                            await update(slotRef, {
+                                booked: false,
+                                occupied: false,
+                                timerActive: false,
+                                startTime: 0,
+                                durationMin: 0,
+                                userId: null
+                            });
+                            console.log('✅ Slot cleared (booking cancelled)');
+                        } else {
+                            console.warn('⚠️ Slot not found in Firebase:', slotKey);
+                        }
+
+
+                        // 2️⃣ Update booking status in Firebase (if exists)
+                        const bookingsRef = ref(window.database, "bookings");
+                        const bookingsSnap = await get(bookingsRef);
+
+                        let bookingUpdated = false;
+                        if (bookingsSnap.exists()) {
+                            const bookings = bookingsSnap.val();
+                            console.log('🔍 Searching for booking with spot:', reservation.spot);
+
+                            for (const key in bookings) {
+                                const booking = bookings[key];
+
+                                // Try multiple matching strategies
+                                const spotMatch = booking.spot === reservation.spot ||
+                                    booking.spot === reservation.spot.toUpperCase() ||
+                                    booking.spot === reservation.spot.toLowerCase();
+
+                                const statusMatch = booking.status === "ACTIVE";
+
+                                // Match by spot and status (most flexible)
+                                if (spotMatch && statusMatch) {
+                                    console.log('🎯 Found matching booking:', key, booking);
+
+                                    const bookingRef = ref(window.database, "bookings/" + key);
+                                    await remove(bookingRef);
+
+                                    bookingUpdated = true;
+                                    console.log('✅ Booking marked as cancelled');
+                                    break;
+                                }
+                            }
+
+                            if (!bookingUpdated) {
+                                console.warn('⚠️ No active booking found for spot:', reservation.spot);
+                                console.warn('   This is OK if the reservation was created before Firebase integration');
+                            }
+                        } else {
+                            console.warn('⚠️ No bookings found in Firebase');
+                        }
+
+                        console.log('✅ Reservation cancelled in Firebase');
+                        toast('Reservation cancelled successfully');
+                    } else {
+                        console.error('❌ Could not map spot to slot key');
+                        toast('Reservation cancelled (local only)');
+                    }
+                } else {
+                    console.warn('⚠️ Firebase database not available');
+                    toast('Reservation cancelled (local only)');
+                }
+            } catch (error) {
+                console.error('❌ Firebase cancellation error:', error);
+                toast('Reservation cancelled (local only)');
+            }
+
+            render();
+        }
+
+        document.getElementById('q').addEventListener('input', render);
+        document.getElementById('filterStatus').addEventListener('change', render);
+        window.logout = function () { localStorage.removeItem('sp_current_user_v1'); window.location.href = 'login.html'; }
+
+        // Wait for Firebase to initialize before rendering
+        setTimeout(() => {
+            console.log('🎬 Starting initial render...');
+            render();
+        }, 500);
+    </script>
+
+
+
+    <canvas id="flickering-grid"
+        style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none;"></canvas>
+    <script src="js/flickering-grid.js"></script>
+    <script src="js/init-grid.js"></script>
+</body>
+
+</html>

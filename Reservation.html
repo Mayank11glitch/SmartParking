@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Smart Parking — Reserve Spot</title>
+  <link rel="stylesheet" href="styles.css">
+
+
+</head>
+
+<body>
+
+  <div class="bg-blob blob-1" style="opacity: 0.2;"></div>
+  <div class="bg-blob blob-2" style="opacity: 0.2;"></div>
+
+  <header>
+    <div class="container">
+      <div class="brand">
+        <div class="brand-logo">SP</div>
+        <div>
+          <div>Smart Parking</div>
+          <div style="font-size:0.8rem;color:var(--text-muted);font-weight:400">Reserve</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;">
+        <button class="btn btn-outline" onclick="window.location.href='dashboard.html'">Back</button>
+        <button class="btn btn-outline" onclick="logout()">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="glass-panel" style="padding: 32px; border-radius:16px;">
+      <h1 style="margin-bottom:8px;">Reserve a Parking Spot</h1>
+      <p style="color:var(--text-muted);margin-bottom:32px;">Choose a slot, set time and vehicle details.</p>
+
+      <div class="split-section" style="padding:0; gap:32px; grid-template-columns: 2fr 1fr;">
+        <!-- Form -->
+        <form id="reserveForm">
+          <div class="form-group">
+            <label class="form-label">Spot ID</label>
+            <input id="spotId" class="form-control" placeholder="e.g. A101" required>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div class="form-group">
+              <label class="form-label">Reservation Date</label>
+              <input id="date" type="date" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Start Time</label>
+              <input id="time" type="time" class="form-control" required>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div class="form-group">
+              <label class="form-label">Duration (hours)</label>
+              <input id="hours" type="number" min="1" max="24" value="1" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Vehicle Number</label>
+              <input id="vehicle" class="form-control" placeholder="MH12AB1234" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Floor (Optional)</label>
+            <select id="floor" class="form-control">
+              <option value="">Auto detect</option>
+              <option value="1">Floor 1</option>
+              <option value="2">Floor 2</option>
+              <option value="3">Floor 3</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Payment Method</label>
+            <select id="payMethod" class="form-control">
+              <option>Pay at exit</option>
+              <option>UPI</option>
+            </select>
+          </div>
+
+          <div style="display:flex;gap:12px;margin-top:24px;">
+            <button class="btn btn-primary" type="submit">Confirm Reservation</button>
+            <button type="button" class="btn btn-outline" onclick="previewCalc()">Preview Cost</button>
+          </div>
+        </form>
+
+        <!-- Summary -->
+        <div class="glass-panel" style="padding:24px; border-radius:12px; background:rgba(255,255,255,0.02);">
+          <h3 style="margin-bottom:16px;">Summary</h3>
+          <div style="display:flex;flex-direction:column;gap:12px;font-size:0.95rem;color:var(--text-muted);">
+            <div style="display:flex;justify-content:space-between;"><span>User:</span> <strong id="resUser"
+                style="color:white">—</strong></div>
+            <div style="display:flex;justify-content:space-between;"><span>Spot:</span> <strong id="resSpot"
+                style="color:white">—</strong></div>
+            <div style="display:flex;justify-content:space-between;"><span>Date:</span> <strong id="resDate"
+                style="color:white">—</strong></div>
+            <div style="display:flex;justify-content:space-between;"><span>Dur:</span> <strong id="resHours"
+                style="color:white">—</strong></div>
+            <div style="display:flex;justify-content:space-between;"><span>Vehicle:</span> <strong id="resVehicle"
+                style="color:white">—</strong></div>
+            <div style="height:1px;background:var(--card-border);margin:8px 0;"></div>
+            <div style="display:flex;justify-content:space-between;"><span>Rate:</span> <strong id="resRate"
+                style="color:white">₹0/hr</strong></div>
+            <div style="display:flex;justify-content:space-between;font-size:1.2rem;color:white;margin-top:8px;">
+              <span>Total:</span> <strong id="resTotal">₹0</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal -->
+  <div id="confirmModal" class="modal-backdrop" style="display:none">
+    <div class="modal-content">
+      <div id="ticketContent">
+        <h3 style="text-align:center;margin-bottom:20px;">Reservation Confirmed</h3>
+        <div style="background:white;color:black;padding:20px;border-radius:12px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span>ID:</span> <strong
+              id="ticketId">—</strong></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span>User:</span> <strong
+              id="ticketUser">—</strong></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span>Spot:</span> <strong
+              id="ticketSpot">—</strong></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span>Time:</span> <strong
+              id="ticketWhen">—</strong></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span>Duration:</span> <strong
+              id="ticketDur">—</strong></div>
+          <div style="margin-top:20px;text-align:center;">
+            <img id="ticketQR" src="" alt="QR" style="width:150px;height:150px;">
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:24px;">
+        <button class="btn btn-outline" onclick="closeModal()">Close</button>
+        <button class="btn btn-outline" onclick="window.location.href='myreservations.html'">My Reservations</button>
+        <button class="btn btn-primary" onclick="printTicket()">Print Ticket</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script>
+    // Keeping original logic
+    function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.style.opacity = 1; t.style.transform = 'translateY(0)'; t.style.pointerEvents = 'auto'; setTimeout(() => { t.style.opacity = 0; t.style.transform = 'translateY(-20px)'; t.style.pointerEvents = 'none'; }, 2400); }
+
+    const current = JSON.parse(localStorage.getItem('sp_current_user_v1') || 'null');
+    if (!current) { window.location.href = 'login.html'; }
+    else { document.getElementById('resUser').textContent = current.firstName || current.email; }
+
+    function qs(name) { const p = new URLSearchParams(location.search); return p.get(name); }
+    const spotParam = qs('spot'); if (spotParam) document.getElementById('spotId').value = spotParam;
+    const floorParam = qs('floor'); if (floorParam) document.getElementById('floor').value = floorParam;
+
+    const priceMap = { 'A101': 40, 'A102': 30, 'A103': 30, 'A104': 40, 'B201': 450, 'C302': 30 };
+    function getRate(spot) { return priceMap[spot] || 500; }
+
+    function previewCalc() {
+      const spot = (document.getElementById('spotId').value || '').trim();
+      const date = document.getElementById('date').value;
+      const time = document.getElementById('time').value;
+      const hours = parseInt(document.getElementById('hours').value || '1', 10);
+      const vehicle = document.getElementById('vehicle').value || '';
+      const rate = getRate(spot);
+      const total = rate * (isNaN(hours) ? 1 : hours);
+
+      document.getElementById('resSpot').textContent = spot || '—';
+      document.getElementById('resDate').textContent = (date ? date : '—') + (time ? ' ' + time : '');
+      document.getElementById('resHours').textContent = (hours || '—') + ' hour(s)';
+      document.getElementById('resVehicle').textContent = vehicle || '—';
+      document.getElementById('resRate').textContent = '₹' + rate + '/hr';
+      document.getElementById('resTotal').textContent = '₹' + total;
+      toast('Price preview updated');
+    }
+
+    function saveReservation(res) {
+      const key = 'sp_reservations_v1';
+      const list = JSON.parse(localStorage.getItem(key) || '[]');
+      list.push(res); localStorage.setItem(key, JSON.stringify(list));
+    }
+
+    function hasConflict(spot, date, startEpoch, endEpoch) {
+      const key = 'sp_reservations_v1';
+      const list = JSON.parse(localStorage.getItem(key) || '[]');
+      for (const r of list) {
+        if (r.status === 'cancelled') continue;
+        if (r.spot.toLowerCase() !== spot.toLowerCase()) continue;
+        if (r.date !== date) continue;
+        const existsS = Date.parse(r.date + 'T' + r.time);
+        const existsE = existsS + (r.hours || 1) * 3600000;
+        if (startEpoch < existsE && existsS < endEpoch) return r;
+      }
+      return null;
+    }
+
+    document.getElementById('reserveForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const spot = document.getElementById('spotId').value.trim();
+      const date = document.getElementById('date').value;
+      const time = document.getElementById('time').value;
+      const hours = parseInt(document.getElementById('hours').value, 10);
+      const vehicle = document.getElementById('vehicle').value.trim();
+      const floor = document.getElementById('floor').value;
+      const payMethod = document.getElementById('payMethod').value;
+
+      if (!spot || !date || !time || !vehicle) return toast('Please fill all fields');
+
+      const sEpoch = Date.parse(date + 'T' + time);
+      const eEpoch = sEpoch + hours * 3600000;
+
+      const conflict = hasConflict(spot, date, sEpoch, eEpoch);
+      if (conflict) return alert('Conflict: Spot occupied by ' + (conflict.userName || 'someone'));
+
+      const rate = getRate(spot);
+      const total = rate * hours;
+      const res = {
+        id: 'res_' + Date.now(),
+        userId: current.id,
+        userName: current.firstName,
+        spot,
+        date,
+        time,
+        hours,
+        vehicle,
+        floor,
+        rate,
+        total,
+        payMethod,
+        created: new Date().toISOString()
+      };
+
+      // Save to localStorage for backward compatibility
+      saveReservation(res);
+
+      // 🔥 FIREBASE INTEGRATION
+      console.log('🔥 Starting Firebase integration...');
+      console.log('   window.database exists:', !!window.database);
+      console.log('   Spot:', spot);
+      console.log('   User ID:', current.id);
+
+      try {
+        const uid = localStorage.getItem("uid") || current.id;
+        const email = localStorage.getItem("userEmail") || current.email;
+
+        if (window.database) {
+          console.log('✅ Firebase database is available');
+
+          // Map spot ID to slot key
+          // Map spot ID to slot key
+          function getSlotKey(spotId) {
+            // Firebase keys match the Spot IDs directly
+            // e.g. "slots/A101"
+            return spotId;
+          }
+
+          const slotKey = getSlotKey(spot);
+          console.log('🔑 Mapped spot', spot, 'to slot key:', slotKey);
+
+          if (slotKey) {
+            console.log('📦 Importing Firebase functions...');
+            const { ref, get, update, push, set } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js");
+            console.log('✅ Firebase functions imported');
+
+            const slotRef = ref(window.database, "slots/" + slotKey);
+            const slotSnap = await get(slotRef);
+            console.log('📊 Slot data:', slotSnap.exists() ? slotSnap.val() : 'NOT FOUND');
+
+            const slotData = slotSnap.val();
+            if (slotData?.occupied === true) {
+              alert("Slot already occupied in Firebase");
+              return;
+            }
+            if (slotData?.booked === true) {
+              alert("Slot already booked by another user");
+              return;
+            }
+
+            // 1️⃣ Mark slot as BOOKED (not occupied yet - waiting for car)
+            console.log('1️⃣ Marking slot as booked...');
+            const durationMin = hours * 60; // Convert hours to minutes
+            await update(slotRef, {
+              booked: true,
+              occupied: false,  // Will be set to true by ESP32 when car detected
+              userId: uid,
+              durationMin: durationMin,
+              startTime: 0,  // ESP32 will set this when car arrives
+              timerActive: false  // ESP32 will activate when car detected
+            });
+            console.log('✅ Slot marked as booked');
+
+            // 2️⃣ Save booking to Firebase
+            console.log('2️⃣ Creating booking record...');
+            const bookingRef = push(ref(window.database, "bookings"));
+            await set(bookingRef, {
+              userId: uid,
+              email: email,
+              spot: spot,
+              slotKey: slotKey,
+              vehicle: vehicle,
+              date: date,
+              time: time,
+              hours: hours,
+              durationMin: durationMin,
+              status: "ACTIVE",
+              createdAt: new Date().toISOString()
+            });
+
+            console.log("✅ Reservation saved to Firebase successfully!");
+          } else {
+            console.warn('⚠️ Slot key is null - spot not mapped:', spot);
+          }
+        } else {
+          console.error('❌ window.database is not available!');
+          console.log('   This means Firebase did not initialize properly');
+        }
+      } catch (error) {
+        console.error("❌ Firebase error:", error);
+        console.error("   Error details:", error.message);
+        console.error("   Stack:", error.stack);
+        // Continue with localStorage-only reservation
+      }
+
+      // Show confirmation modal
+      openModalWithReservation(res);
+    });
+
+    function openModalWithReservation(res) {
+      document.getElementById('ticketId').textContent = res.id;
+      document.getElementById('ticketUser').textContent = res.userName;
+      document.getElementById('ticketSpot').textContent = res.spot;
+      document.getElementById('ticketWhen').textContent = res.date + ' ' + res.time;
+      document.getElementById('ticketDur').textContent = res.hours + 'h';
+
+      const payload = encodeURIComponent(`RES|${res.id}|${res.spot}`);
+      document.getElementById('ticketQR').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${payload}`;
+      document.getElementById('confirmModal').style.display = 'flex';
+      toast('Reservation Confirmed!');
+    }
+
+    window.closeModal = function () { document.getElementById('confirmModal').style.display = 'none'; window.location.href = 'dashboard.html'; }
+
+    window.printTicket = function () {
+      const c = document.getElementById('ticketContent').innerHTML;
+      const w = window.open('', '_blank', 'width=400,height=600');
+      const htmlContent = '<html><body style="font-family:sans-serif;padding:20px;">' + c + '<' + '/body><' + '/html>';
+      w.document.write(htmlContent);
+      w.document.close();
+      setTimeout(function () { w.print(); }, 500);
+    }
+
+    window.logout = function () { localStorage.removeItem('sp_current_user_v1'); window.location.href = 'login.html'; }
+
+    ['spotId', 'date', 'time', 'hours', 'vehicle', 'floor'].forEach(id => document.getElementById(id).addEventListener('input', previewCalc));
+    previewCalc();
+  </script>
+  <canvas id="flickering-grid"
+    style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none;"></canvas>
+  <script src="js/flickering-grid.js"></script>
+  <script src="js/init-grid.js"></script>
+
+  <script type="module">
+    // 🔥 Firebase Initialization for Reservation System
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCHrwLfSCIuLvC7VqhpX-u_jUaW2AwDauU",
+      authDomain: "smartparkingfinal-8c79e.firebaseapp.com",
+      databaseURL: "https://smartparkingfinal-8c79e-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "smartparkingfinal-8c79e",
+      storageBucket: "smartparkingfinal-8c79e.firebasestorage.app",
+      messagingSenderId: "855138079664",
+      appId: "1:855138079664:web:78fd5da08725e5d9abbc75"
+    };
+
+    // Initialize Firebase and make database available globally
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+    window.database = database;
+
+    console.log("🔥 Firebase initialized for Reservation page");
+  </script>
+</body>
+
+</html>

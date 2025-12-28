@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Smart Parking — Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+
+
+</head>
+
+<body>
+
+    <div class="bg-blob blob-1" style="opacity: 0.2;"></div>
+    <div class="bg-blob blob-2" style="opacity: 0.2;"></div>
+
+    <div id="loader">
+        <div class="loader-content">
+            <div class="loader-spinner"></div>
+        </div>
+    </div>
+
+    <header id="siteHeader">
+        <div class="container">
+            <div class="brand">
+                <div class="brand-logo">SP</div>
+                <div>
+                    <div>Smart Parking</div>
+                    <div style="font-size:0.8rem;color:var(--text-muted);font-weight:400">Dashboard</div>
+                </div>
+            </div>
+            <nav class="nav-links">
+                <a href="dashboard.html" class="nav-link active">Dashboard</a>
+                <a href="myreservations.html" class="nav-link">Reservations</a>
+                <a href="histroy.html" class="nav-link">History</a>
+                <button onclick="logout()" class="btn btn-outline" style="padding:6px 12px;">Logout</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="glass-panel reveal"
+            style="padding: 32px; border-radius:16px; margin-top:32px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:24px; align-items: flex-end;">
+            <div>
+                <h1 style="font-size:2rem; margin-bottom:8px;">Welcome, <span id="userName"
+                        class="text-gradient">User</span></h1>
+                <p style="color:var(--text-muted); font-size: 1.1rem;">Here's what's happening in your parking lot
+                    today.</p>
+            </div>
+            <div style="display:flex;gap:12px;align-items:center; flex-wrap: wrap;">
+                <input id="searchInput" class="form-control" placeholder="Search spots..." style="min-width:240px;">
+                <select id="floorFilter" class="form-control" style="width:auto;">
+                    <option value="all">All Floors</option>
+                    <option value="1">Floor 1</option>
+                    <option value="2">Floor 2</option>
+                    <option value="3">Floor 3</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stat-grid reveal" style="margin-top:24px;">
+            <div class="stat-card">
+                <div class="stat-value" id="availableCount" style="color:#6ee7b7">—</div>
+                <div class="stat-label">Available Spots</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="occupiedCount" style="color:#fca5a5">—</div>
+                <div class="stat-label">Occupied Spots</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="evCount" style="color:#7c5cff">—</div>
+                <div class="stat-label">EV Chargers</div>
+            </div>
+            <div class="stat-card" style="position:relative; overflow:hidden;">
+                <div class="stat-value" id="occupancyPercent" style="color:#fcd34d">—%</div>
+                <div class="stat-label">Current Occupancy</div>
+                <div
+                    style="position:absolute; bottom:0; left:0; height:4px; background:rgba(255,255,255,0.1); width:100%;">
+                    <div id="occupancyBar"
+                        style="height:100%; background:#fcd34d; width:0%; transition: width 1s ease;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-layout reveal">
+            <!-- Left: Spots -->
+            <div class="glass-panel" style="padding:24px; border-radius:12px;">
+                <h3 style="margin-bottom:20px;">Parking Grid</h3>
+                <div class="card-grid" id="spotsContainer"
+                    style="grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); margin:0; gap:16px;">
+                    <!-- Spots (Dynamic) -->
+                    <div class="spot">
+                        <div style="display:flex;justify-content:space-between;align-items:center">
+                            <h3>A101</h3><span class="badge available">Available</span>
+                        </div>
+                        <div style="color:var(--text-muted);font-size:0.9rem;">Floor 1 • ₹40/hr</div>
+                        <div
+                            style="margin-top:auto;font-size:0.85rem;color:#7c5cff;font-weight:600;margin-bottom:12px;">
+                            EV Charger</div>
+                        <button class="btn btn-primary reserve"
+                            style="width:100%;font-size:0.9rem;padding:8px;">Reserve</button>
+                    </div>
+                    <div class="spot">
+                        <div style="display:flex;justify-content:space-between;align-items:center">
+                            <h3>A102</h3><span class="badge available">Available</span>
+                        </div>
+                        <div style="color:var(--text-muted);font-size:0.9rem;">Floor 1 • ₹30/hr</div>
+                        <div style="margin-top:auto;margin-bottom:12px;"></div>
+                        <button class="btn btn-primary reserve"
+                            style="width:100%;font-size:0.9rem;padding:8px;">Reserve</button>
+                    </div>
+                    <div class="spot">
+                        <div style="display:flex;justify-content:space-between;align-items:center">
+                            <h3>A103</h3><span class="badge available">Available</span>
+                        </div>
+                        <div style="color:var(--text-muted);font-size:0.9rem;">Floor 1 • ₹30/hr</div>
+                        <div style="margin-top:auto;margin-bottom:12px;"></div>
+                        <button class="btn btn-primary reserve"
+                            style="width:100%;font-size:0.9rem;padding:8px;">Reserve</button>
+                    </div>
+                    <div class="spot">
+                        <div style="display:flex;justify-content:space-between;align-items:center">
+                            <h3>A104</h3><span class="badge available">Available</span>
+                        </div>
+                        <div style="color:var(--text-muted);font-size:0.9rem;">Floor 1 • ₹40/hr</div>
+                        <div
+                            style="margin-top:auto;font-size:0.85rem;color:#7c5cff;font-weight:600;margin-bottom:12px;">
+                            EV Charger</div>
+                        <button class="btn btn-primary reserve"
+                            style="width:100%;font-size:0.9rem;padding:8px;">Reserve</button>
+                    </div>
+                    <div class="spot">
+                        <div style="display:flex;justify-content:space-between;align-items:center">
+                            <h3>B201</h3><span class="badge available">Available</span>
+                        </div>
+                        <div style="color:var(--text-muted);font-size:0.9rem;">Floor 2 • ₹45/hr</div>
+                        <div style="margin-top:auto;font-size:0.85rem;color:var(--text-muted);margin-bottom:12px;">Near
+                            Elevator</div>
+                        <button class="btn btn-primary reserve"
+                            style="width:100%;font-size:0.9rem;padding:8px;">Reserve</button>
+                    </div>
+                    <div class="spot">
+                        <div style="display:flex;justify-content:space-between;align-items:center">
+                            <h3>C302</h3><span class="badge available">Available</span>
+                        </div>
+                        <div style="color:var(--text-muted);font-size:0.9rem;">Floor 3 • ₹30/hr</div>
+                        <div style="margin-top:auto;font-size:0.85rem;color:var(--text-muted);margin-bottom:12px;">
+                            Standard</div>
+                        <button class="btn btn-primary reserve"
+                            style="width:100%;font-size:0.9rem;padding:8px;">Reserve</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Aside -->
+            <div style="display:flex;flex-direction:column;gap:24px;">
+                <div class="glass-panel" style="padding:24px;border-radius:12px;">
+                    <h3 style="margin-bottom:16px;">Locations</h3>
+                    <div style="display:flex;flex-direction:column;gap:12px;">
+                        <div class="spot"
+                            style="min-height:auto;flex-direction:row;align-items:center; border: none; padding: 12px; background: rgba(255,255,255,0.02);">
+                            <div style="flex:1">
+                                <strong style="color:white">Level 2 Charger</strong>
+                                <div style="font-size:0.8rem;color:var(--text-muted);">Spot A101 • Floor 1</div>
+                            </div>
+                            <button class="btn btn-outline" style="padding:6px 12px;font-size:0.8rem">Map</button>
+                        </div>
+                        <div class="spot"
+                            style="min-height:auto;flex-direction:row;align-items:center; border: none; padding: 12px; background: rgba(255,255,255,0.02);">
+                            <div style="flex:1">
+                                <strong style="color:white">Level 3 DC Fast</strong>
+                                <div style="font-size:0.8rem;color:var(--text-muted);">Spot B-203 • Floor 2</div>
+                            </div>
+                            <button class="btn btn-outline" style="padding:6px 12px;font-size:0.8rem">Map</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-panel" style="padding:24px;border-radius:12px;">
+                    <h3 style="margin-bottom:16px;">Quick Actions</h3>
+                    <div style="display:flex;flex-direction:column;gap:10px;">
+                        <button class="btn btn-outline" style="justify-content:flex-start"
+                            onclick="window.location.href='myreservations.html'">My Reservations</button>
+                        <button class="btn btn-outline" style="justify-content:flex-start"
+                            onclick="window.location.href='histroy.html'">Transaction History</button>
+                        <button class="btn btn-outline" style="justify-content:flex-start"
+                            onclick="window.location.href='contact.html'">Support</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="toast"></div>
+
+    <script>
+        function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.style.opacity = 1; t.style.transform = 'translateY(0)'; setTimeout(() => { t.style.opacity = 0; t.style.transform = 'translateY(-20px)'; }, 2600); }
+
+        const current = JSON.parse(localStorage.getItem('sp_current_user_v1') || 'null');
+        if (!current && !location.href.includes('login')) {
+            document.getElementById('userName').textContent = 'Guest';
+        } else if (current) {
+            document.getElementById('userName').textContent = current.firstName || current.email;
+        }
+
+        const RES_KEY = 'sp_reservations_v1';
+        function getAllReservations() { try { return JSON.parse(localStorage.getItem(RES_KEY) || '[]'); } catch (e) { return []; } }
+
+        function toEpoch(dateStr, timeStr) { return Date.parse(dateStr + 'T' + timeStr); }
+        function overlaps(sA, eA, sB, eB) { return (sA < eB) && (sB < eA); }
+
+        function computeSpotStatuses() {
+            const now = Date.now();
+            const reservations = getAllReservations();
+            const bySpot = {};
+            for (const r of reservations) {
+                const k = (r.spot || '').toString().trim().toUpperCase();
+                if (k) { bySpot[k] = bySpot[k] || []; bySpot[k].push(r); }
+            }
+
+            const spots = Array.from(document.querySelectorAll('#spotsContainer .spot'));
+            const totals = { total: spots.length, occupied: 0, reserved: 0, evCount: 0 };
+
+            spots.forEach(sp => {
+                // UI updates for Availability/Occupancy are now handled by dashboard.js (Firebase)
+                // We only count EV chargers here for the stat card
+                if (sp.innerText.toLowerCase().includes('ev charger')) totals.evCount++;
+            });
+
+            totals.available = totals.total - totals.occupied - totals.reserved;
+            totals.occupancyPercent = totals.total ? Math.round(((totals.occupied) / totals.total) * 100) : 0;
+            return totals;
+        }
+
+        function refreshDashboard() {
+            const stats = computeSpotStatuses();
+
+            // ⚠️ IMPORTANT: Don't update these stats - Firebase controls them!
+            // The stats (available, occupied, occupancy) are updated by Firebase real-time listeners in dashboard.js
+            // Only computeSpotStatuses() is needed to update the spot card UI (badges and buttons)
+
+            // ✅ Only update EV count (not tracked by Firebase)
+            document.getElementById('evCount').textContent = stats.evCount;
+
+            // Note: Available, Occupied, and Occupancy % are updated by Firebase listeners
+            // See dashboard.js lines 27-66 for Firebase real-time updates
+        }
+
+        function attachReserveHandlers() {
+            document.querySelectorAll('.reserve').forEach(btn => {
+                if (btn.dataset.hasHandler) return;
+                btn.dataset.hasHandler = '1';
+                btn.addEventListener('click', () => {
+                    if (btn.disabled) return;
+                    const spotEl = btn.closest('.spot');
+                    const spotId = spotEl.querySelector('h3').textContent;
+                    const floorText = spotEl.innerText.match(/Floor\s*(\d)/i);
+                    const floor = floorText ? floorText[1] : '';
+                    location.href = `Reservation.html?spot=${spotId}&floor=${floor}`;
+                });
+            });
+        }
+
+        function applySearch() {
+            const q = document.getElementById('searchInput').value.toLowerCase();
+            const f = document.getElementById('floorFilter').value;
+            document.querySelectorAll('#spotsContainer .spot').forEach(sp => {
+                const txt = sp.innerText.toLowerCase();
+                const floorM = txt.match(/floor\s*(\d)/);
+                const spFloor = floorM ? floorM[1] : '';
+                const matchFloor = (f === 'all' || f === spFloor);
+                if (txt.includes(q) && matchFloor) {
+                    sp.style.display = 'flex';
+                    if (q) { sp.classList.add('match-highlight'); setTimeout(() => sp.classList.remove('match-highlight'), 1000); }
+                } else {
+                    sp.style.display = 'none';
+                }
+            });
+        }
+
+        window.onload = function () {
+            setTimeout(() => {
+                document.getElementById('loader').classList.add('hidden');
+                // Trigger animations
+                document.querySelectorAll('.reveal').forEach(el => el.classList.add('active'));
+            }, 500);
+            refreshDashboard();
+            attachReserveHandlers();
+            setInterval(refreshDashboard, 15000);
+            document.getElementById('searchInput').addEventListener('input', applySearch);
+            document.getElementById('floorFilter').addEventListener('change', applySearch);
+        };
+
+        window.logout = function () { localStorage.removeItem('sp_current_user_v1'); location.href = 'login.html'; }
+    </script>
+    <canvas id="flickering-grid"
+        style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none;"></canvas>
+    <script src="js/flickering-grid.js"></script>
+    <script src="js/init-grid.js"></script>
+    <script type="module" src="dashboard.js"></script>
+</body>
+
+</html>

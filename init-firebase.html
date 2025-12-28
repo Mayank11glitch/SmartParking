@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Initialize Firebase Database</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .init-container {
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .init-box {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 40px;
+            backdrop-filter: blur(10px);
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .status.info {
+            background: rgba(124, 92, 255, 0.1);
+            border: 1px solid rgba(124, 92, 255, 0.3);
+            color: #7c5cff;
+        }
+
+        .status.success {
+            background: rgba(110, 231, 183, 0.1);
+            border: 1px solid rgba(110, 231, 183, 0.3);
+            color: #6ee7b7;
+        }
+
+        .status.error {
+            background: rgba(252, 165, 165, 0.1);
+            border: 1px solid rgba(252, 165, 165, 0.3);
+            color: #fca5a5;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            font-size: 2rem;
+        }
+
+        p {
+            color: var(--text-muted);
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .btn-back {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-blob blob-1" style="opacity: 0.2;"></div>
+    <div class="bg-blob blob-2" style="opacity: 0.2;"></div>
+
+    <div class="init-container">
+        <div class="init-box">
+            <h1>🔥 Firebase Database Setup</h1>
+            <p>
+                This will initialize your Firebase Realtime Database with the parking slot structure.
+                <br><br>
+                <strong>What will be created:</strong><br>
+                • 6 parking slots (A-101, A-102, A-103, A-104, B-201, C-302)<br>
+                • Parking statistics (total, available, occupied)<br>
+                • All slots will be marked as available
+            </p>
+
+            <div id="status" class="status info">
+                🔄 Initializing database...
+            </div>
+
+            <button class="btn btn-primary btn-back" onclick="window.location.href='dashboard.html'"
+                style="display: none;" id="backBtn">
+                Go to Dashboard
+            </button>
+        </div>
+    </div>
+
+    <canvas id="flickering-grid"
+        style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none;"></canvas>
+    <script src="js/flickering-grid.js"></script>
+    <script src="js/init-grid.js"></script>
+    <script type="module" src="init-firebase.js"></script>
+
+    <script type="module">
+        import { ref, set, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { db } from "./firebase.js";
+
+        const statusEl = document.getElementById('status');
+        const backBtn = document.getElementById('backBtn');
+
+        async function initializeDatabase() {
+            try {
+                statusEl.className = 'status info';
+                statusEl.innerHTML = '🔄 Checking existing data...';
+
+                // Check if data already exists
+                const parkingRef = ref(db, "parking");
+                const snapshot = await get(parkingRef);
+
+                if (snapshot.exists()) {
+                    const existingData = snapshot.val();
+                    statusEl.className = 'status info';
+                    statusEl.innerHTML = `⚠️ Database already initialized!<br><br>
+                        Current Stats:<br>
+                        Total Slots: ${existingData.totalSlots || 0}<br>
+                        Available: ${existingData.availableSlots || 0}<br>
+                        Occupied: ${existingData.fullSlots || 0}<br><br>
+                        <button class="btn btn-outline" onclick="if(confirm('Reset database? This will delete all bookings!')) location.reload()">Reset Database</button>`;
+                    backBtn.style.display = 'inline-block';
+                    return;
+                }
+
+                statusEl.innerHTML = '🔄 Creating parking statistics...';
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // Initialize parking statistics
+                await set(ref(db, "parking"), {
+                    totalSlots: 6,
+                    availableSlots: 6,
+                    fullSlots: 0,
+                    status: "AVAILABLE"
+                });
+
+                statusEl.innerHTML = '🔄 Creating parking slots...';
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // Initialize slots
+                const slotsData = {
+                    "A-101": { slotId: "A-101", floor: 1, price: 40, occupied: false, hasEVCharger: true, userId: null },
+                    "A-102": { slotId: "A-102", floor: 1, price: 30, occupied: false, hasEVCharger: false, userId: null },
+                    "A-103": { slotId: "A-103", floor: 1, price: 30, occupied: false, hasEVCharger: false, userId: null },
+                    "A-104": { slotId: "A-104", floor: 1, price: 40, occupied: false, hasEVCharger: true, userId: null },
+                    "B-201": { slotId: "B-201", floor: 2, price: 45, occupied: false, hasEVCharger: false, userId: null },
+                    "C-302": { slotId: "C-302", floor: 3, price: 30, occupied: false, hasEVCharger: false, userId: null }
+                };
+
+                await set(ref(db, "slots"), slotsData);
+
+                statusEl.className = 'status success';
+                statusEl.innerHTML = `✅ Database initialized successfully!<br><br>
+                    📊 Created 6 parking slots<br>
+                    📊 All slots are available<br>
+                    📊 Statistics configured<br><br>
+                    You can now go to the dashboard to see real-time data!`;
+
+                backBtn.style.display = 'inline-block';
+
+            } catch (error) {
+                console.error("Error:", error);
+                statusEl.className = 'status error';
+                statusEl.innerHTML = `❌ Error initializing database:<br>${error.message}<br><br>
+                    <button class="btn btn-primary" onclick="location.reload()">Try Again</button>`;
+            }
+        }
+
+        window.addEventListener("load", initializeDatabase);
+    </script>
+</body>
+
+</html>

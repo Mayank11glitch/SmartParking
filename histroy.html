@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Smart Parking — History</title>
+    <link rel="stylesheet" href="styles.css">
+
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+        // TODO: Add SDKs for Firebase products that you want to use
+        // https://firebase.google.com/docs/web/setup#available-libraries
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBb2gyu39_UJ7060SR4BPPBYBWv9VxrH8Y",
+            authDomain: "smartparkingfinal-d7ed0.firebaseapp.com",
+            databaseURL: "https://smartparkingfinal-d7ed0-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "smartparkingfinal-d7ed0",
+            storageBucket: "smartparkingfinal-d7ed0.firebasestorage.app",
+            messagingSenderId: "655499826374",
+            appId: "1:655499826374:web:7027824e312cbf48df33c7"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        window.database = database;
+    </script>
+
+</head>
+
+<body>
+
+    <div class="bg-blob blob-1" style="opacity: 0.2;"></div>
+    <div class="bg-blob blob-2" style="opacity: 0.2;"></div>
+
+    <div id="loader">
+        <div class="loader-content">
+            <div class="loader-spinner"></div>
+            <div style="margin-top:16px;font-weight:600;">Loading History...</div>
+        </div>
+    </div>
+
+    <header id="siteHeader">
+        <div class="container">
+            <div class="brand">
+                <div class="brand-logo">SP</div>
+                <div>
+                    <div>Smart Parking</div>
+                    <div style="font-size:0.8rem;color:var(--text-muted);font-weight:400">History</div>
+                </div>
+            </div>
+            <nav class="nav-links">
+                <a href="dashboard.html" class="nav-link">Dashboard</a>
+                <a href="histroy.html" class="nav-link active">History</a>
+                <button onclick="logout()" class="btn btn-outline" style="padding:6px 12px;">Logout</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="glass-panel" style="padding: 32px; border-radius:16px; margin-top:40px;">
+            <h1 style="font-size:1.8rem; margin-bottom:8px;">Transaction History</h1>
+            <p style="color:var(--text-muted);margin-bottom:32px;">Audit log of all your reservations and activities.
+            </p>
+
+            <div class="glass-panel"
+                style="padding:20px; border-radius:12px; display:flex; flex-wrap:wrap; gap:16px; align-items:center; margin-bottom:24px; background:rgba(255,255,255,0.02);">
+                <input id="q" class="form-control" placeholder="Search..." style="flex:1;min-width:200px;">
+                <select id="filter" class="form-control" style="width:auto;min-width:140px;">
+                    <option value="all">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="upcoming">Upcoming</option>
+                    <option value="past">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+                <select id="sort" class="form-control" style="width:auto;min-width:140px;">
+                    <option value="new">Newest First</option>
+                    <option value="old">Oldest First</option>
+                </select>
+            </div>
+
+            <div id="history" style="display:flex;flex-direction:column;gap:16px;"></div>
+            <div id="empty" style="padding:40px;text-align:center;color:var(--text-muted);display:none">No records
+                found.</div>
+        </div>
+    </main>
+
+    <div id="toast"></div>
+
+    <script>
+        const RES_KEY = 'sp_reservations_v1';
+        const CURRENT_KEY = 'sp_current_user_v1';
+
+        function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.style.opacity = 1; t.style.transform = 'translateY(0)'; setTimeout(() => { t.style.opacity = 0; t.style.transform = 'translateY(-20px)'; }, 2200); }
+
+        function getReservations() { try { return JSON.parse(localStorage.getItem(RES_KEY) || '[]'); } catch (e) { return []; } }
+
+        function renderList() {
+            const current = JSON.parse(localStorage.getItem(CURRENT_KEY) || 'null');
+            if (!current) { window.location.href = 'login.html'; return; }
+
+            let list = getReservations().filter(r => String(r.userId) === String(current.id));
+            const q = document.getElementById('q').value.toLowerCase();
+
+            if (q) list = list.filter(r => (r.spot || '').toLowerCase().includes(q));
+
+            const filter = document.getElementById('filter').value;
+            const now = Date.now();
+
+            list = list.filter(r => {
+                const start = Date.parse(r.date + 'T' + r.time);
+                const end = start + (r.hours || 1) * 3600000;
+                const isCancelled = r.status === 'cancelled';
+
+                if (filter === 'past') return !isCancelled && end < now;
+                if (filter === 'upcoming') return !isCancelled && start > now;
+                if (filter === 'active') return !isCancelled && start <= now && now < end;
+                if (filter === 'cancelled') return isCancelled;
+                return true;
+            });
+
+            const sort = document.getElementById('sort').value;
+            list.sort((a, b) => {
+                const tA = Date.parse(a.created || a.date);
+                const tB = Date.parse(b.created || b.date); // fallback
+                return sort === 'new' ? tB - tA : tA - tB;
+            });
+
+            const container = document.getElementById('history');
+            container.innerHTML = '';
+
+            if (list.length === 0) {
+                document.getElementById('empty').style.display = 'block';
+                return;
+            } else document.getElementById('empty').style.display = 'none';
+
+            list.forEach(r => {
+                const start = Date.parse(r.date + 'T' + r.time);
+                const end = start + (r.hours || 1) * 3600000;
+                let status = 'Completed';
+                let badgeClass = 'available'; // actually repurposing available/occupied classes for colors
+
+                if (r.status === 'cancelled') { status = 'Cancelled'; badgeClass = 'occupied'; }
+                else if (start <= now && now < end) { status = 'Active'; badgeClass = 'reserved'; }
+                else if (start > now) { status = 'Upcoming'; badgeClass = 'available'; }
+                else { status = 'Completed'; badgeClass = 'mine'; } // mine is purple, reusing it
+
+                const el = document.createElement('div');
+                el.className = 'glass-panel';
+                el.style.cssText = 'padding:20px; border-radius:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; background:rgba(255,255,255,0.02);';
+
+                el.innerHTML = `
+           <div style="display:flex;gap:16px;align-items:center;">
+             <div style="width:50px;height:50px;background:rgba(255,255,255,0.05);border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;">${r.spot}</div>
+             <div>
+               <div style="font-weight:600;">${r.date} • ${r.time}</div>
+               <div style="font-size:0.85rem;color:var(--text-muted);">Floor ${r.floor || '—'} • ${r.hours} hr</div>
+             </div>
+           </div>
+           
+           <div style="display:flex;gap:16px;align-items:center;">
+              <span class="badge ${badgeClass}" style="font-size:0.75rem;">${status}</span>
+              <div style="font-weight:700;font-size:1.1rem;">₹${r.total || 0}</div>
+           </div>
+         `;
+                container.appendChild(el);
+            });
+        }
+
+        document.getElementById('q').addEventListener('input', renderList);
+        document.getElementById('filter').addEventListener('change', renderList);
+        document.getElementById('sort').addEventListener('change', renderList);
+
+        window.onload = function () {
+            setTimeout(() => document.getElementById('loader').classList.add('hidden'), 500);
+            renderList();
+        };
+
+        window.logout = function () { localStorage.removeItem(CURRENT_KEY); window.location.href = 'login.html'; }
+    </script>
+    <canvas id="flickering-grid"
+        style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none;"></canvas>
+    <script src="js/flickering-grid.js"></script>
+    <script src="js/init-grid.js"></script>
+</body>
+
+</html>

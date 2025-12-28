@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Database Initializer</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .init-container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 30px;
+        }
+
+        .status-box {
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-family: monospace;
+        }
+
+        .success {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid #22c55e;
+            color: #22c55e;
+        }
+
+        .error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #ef4444;
+            color: #ef4444;
+        }
+
+        .info {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid #3b82f6;
+            color: #3b82f6;
+        }
+
+        pre {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+
+        button {
+            margin: 10px 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-blob blob-1" style="opacity: 0.2;"></div>
+    <div class="bg-blob blob-2" style="opacity: 0.2;"></div>
+
+    <div class="init-container glass-panel">
+        <h1 style="text-align: center; margin-bottom: 10px;">🔥 Firebase Database Initializer</h1>
+        <p style="text-align: center; color: var(--text-muted); margin-bottom: 30px;">
+            Initialize your Firebase Realtime Database with the correct structure
+        </p>
+
+        <div id="status" class="status-box info">
+            <strong>Ready to initialize</strong><br>
+            Click the button below to set up your Firebase database with the correct structure.
+        </div>
+
+        <div style="text-align: center; margin: 30px 0;">
+            <button class="btn btn-primary" onclick="initializeDatabase()"
+                style="font-size: 1.1rem; padding: 15px 30px;">
+                Initialize Firebase Database
+            </button>
+            <button class="btn btn-outline" onclick="checkDatabase()" style="font-size: 1.1rem; padding: 15px 30px;">
+                Check Current Data
+            </button>
+        </div>
+
+        <div class="glass-panel" style="padding: 20px; margin-top: 30px; background: rgba(255,255,255,0.02);">
+            <h3>What this will do:</h3>
+            <ul style="line-height: 2;">
+                <li>✅ Set up <code>parking</code> node with correct initial values</li>
+                <li>✅ Create <code>slots</code> for A-101 and A-102</li>
+                <li>✅ Initialize <code>bookings</code> node (empty)</li>
+                <li>✅ Reset all counters to zero</li>
+            </ul>
+
+            <h3 style="margin-top: 20px;">Database Structure:</h3>
+            <pre>{
+  "parking": {
+    "availableSlots": 6,
+    "fullSlots": 0,
+    "totalSlots": 6,
+    "status": "AVAILABLE"
+  },
+  "slots": {
+    "slot1": {
+      "slotId": "A-101",
+      "occupied": false,
+      "userId": null
+    },
+    "slot2": {
+      "slotId": "A-102",
+      "occupied": false,
+      "userId": null
+    }
+  },
+  "bookings": {}
+}</pre>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCHrwLfSCIuLvC7VqhpX-u_jUaW2AwDauU",
+            authDomain: "smartparkingfinal-8c79e.firebaseapp.com",
+            databaseURL: "https://smartparkingfinal-8c79e-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "smartparkingfinal-8c79e",
+            storageBucket: "smartparkingfinal-8c79e.firebasestorage.app",
+            messagingSenderId: "855138079664",
+            appId: "1:855138079664:web:78fd5da08725e5d9abbc75"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = 'status-box ' + type;
+            statusDiv.innerHTML = message;
+        }
+
+        window.checkDatabase = async function () {
+            updateStatus('🔍 Checking current database...', 'info');
+
+            try {
+                const parkingRef = ref(database, 'parking');
+                const slotsRef = ref(database, 'slots');
+                const bookingsRef = ref(database, 'bookings');
+
+                const [parkingSnap, slotsSnap, bookingsSnap] = await Promise.all([
+                    get(parkingRef),
+                    get(slotsRef),
+                    get(bookingsRef)
+                ]);
+
+                let message = '<strong>Current Database State:</strong><br><br>';
+
+                message += '<strong>Parking:</strong><br>';
+                if (parkingSnap.exists()) {
+                    message += '<pre>' + JSON.stringify(parkingSnap.val(), null, 2) + '</pre>';
+                } else {
+                    message += '❌ Not initialized<br>';
+                }
+
+                message += '<strong>Slots:</strong><br>';
+                if (slotsSnap.exists()) {
+                    message += '<pre>' + JSON.stringify(slotsSnap.val(), null, 2) + '</pre>';
+                } else {
+                    message += '❌ Not initialized<br>';
+                }
+
+                message += '<strong>Bookings:</strong><br>';
+                if (bookingsSnap.exists()) {
+                    const bookings = bookingsSnap.val();
+                    const count = Object.keys(bookings).length;
+                    message += `✅ ${count} booking(s) found<br>`;
+                } else {
+                    message += '❌ Not initialized<br>';
+                }
+
+                updateStatus(message, 'info');
+            } catch (error) {
+                updateStatus('❌ Error checking database: ' + error.message, 'error');
+                console.error(error);
+            }
+        };
+
+        window.initializeDatabase = async function () {
+            if (!confirm('This will reset your Firebase database. Are you sure?')) {
+                return;
+            }
+
+            updateStatus('⏳ Initializing database...', 'info');
+
+            try {
+                // Initialize parking statistics
+                const parkingRef = ref(database, 'parking');
+                await set(parkingRef, {
+                    availableSlots: 6,
+                    fullSlots: 0,
+                    totalSlots: 6,
+                    status: "AVAILABLE"
+                });
+                console.log('✅ Parking initialized');
+
+                // Initialize slots
+                const slot1Ref = ref(database, 'slots/slot1');
+                await set(slot1Ref, {
+                    slotId: "A-101",
+                    occupied: false,
+                    userId: null
+                });
+                console.log('✅ Slot1 initialized');
+
+                const slot2Ref = ref(database, 'slots/slot2');
+                await set(slot2Ref, {
+                    slotId: "A-102",
+                    occupied: false,
+                    userId: null
+                });
+                console.log('✅ Slot2 initialized');
+
+                // Initialize bookings (empty object)
+                const bookingsRef = ref(database, 'bookings');
+                await set(bookingsRef, {});
+                console.log('✅ Bookings initialized');
+
+                updateStatus(
+                    '<strong>✅ Database Initialized Successfully!</strong><br><br>' +
+                    '✅ Parking statistics set<br>' +
+                    '✅ Slots created (A-101, A-102)<br>' +
+                    '✅ Bookings node initialized<br><br>' +
+                    '<strong>Next steps:</strong><br>' +
+                    '1. Go to <a href="dashboard.html" style="color: #7c5cff;">Dashboard</a> to verify stats<br>' +
+                    '2. Make a test reservation<br>' +
+                    '3. Check if counters update correctly',
+                    'success'
+                );
+
+            } catch (error) {
+                updateStatus('❌ Error initializing database: ' + error.message, 'error');
+                console.error(error);
+            }
+        };
+
+        console.log('🔥 Firebase Initializer Ready');
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Smart Parking — Welcome</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+  <!-- Background Accents -->
+  <!-- Background Accents (reduced opacity for grid visibility) -->
+  <div class="bg-blob blob-1" style="opacity: 0.2;"></div>
+  <div class="bg-blob blob-2" style="opacity: 0.2;"></div>
+
+  <!-- Loader -->
+  <div id="loader">
+    <div class="loader-content">
+      <div class="loader-spinner"></div>
+    </div>
+  </div>
+
+  <header>
+    <div class="container">
+      <div class="brand">
+        <img src="Logo.png" alt="Logo" class="brand-logo"
+          style="background: none; box-shadow: none; width: 40px; height: 40px;">
+        <span>Smart Parking</span>
+      </div>
+      <nav class="nav-links">
+        <button class="btn btn-outline" onclick="window.location.href='login.html'">Log In</button>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero reveal">
+      <div class="container">
+        <div style="display:flex; justify-content:center; gap:12px; flex-wrap:wrap; margin-bottom:24px;"></div>
+        <div
+          style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;background:rgba(255,255,255,0.05);border-radius:20px;border:1px solid rgba(255,255,255,0.1);">
+          <span style="font-size:1.1rem;">📱</span>
+          <span style="font-size:0.9rem;font-weight:500;">App Integration</span>
+        </div>
+        <div
+          style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;background:rgba(255,255,255,0.05);border-radius:20px;border:1px solid rgba(255,255,255,0.1);">
+          <span style="font-size:1.1rem;">⚡</span>
+          <span style="font-size:0.9rem;font-weight:500;">Real-Time Data</span>
+        </div>
+        <div
+          style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;background:rgba(255,255,255,0.05);border-radius:20px;border:1px solid rgba(255,255,255,0.1);">
+          <span style="font-size:1.1rem;">🛡️</span>
+          <span style="font-size:0.9rem;font-weight:500;">Secure Parking</span>
+        </div>
+      </div>
+      <h1>
+        Park Smart, <span class="text-gradient">Live Better</span>
+      </h1>
+      <p class="hero-lead">
+        Real-time parking availability, seamless reservations, and EV charging — built for modern cities.
+      </p>
+      <button class="btn btn-primary" onclick="window.location.href='login.html'">Get Started</button>
+      </div>
+    </section>
+
+    <section class="container reveal" style="margin-top: 40px; margin-bottom: 40px;">
+      <div class="glass-panel" style="padding: 40px; border-radius: 20px;">
+        <h2 style="text-align: center; margin-bottom: 40px; font-size: 2rem;">How It Works</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px;">
+          <div style="text-align: center;">
+            <div
+              style="width: 60px; height: 60px; background: rgba(0, 170, 255, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: #00aaff; font-size: 1.5rem; font-weight: bold;">
+              1</div>
+            <h3 style="margin-bottom: 10px;">Create Account</h3>
+            <p style="color: var(--text-muted);">Sign up in seconds and access your personalized dashboard.</p>
+          </div>
+          <div style="text-align: center;">
+            <div
+              style="width: 60px; height: 60px; background: rgba(124, 92, 255, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: #7c5cff; font-size: 1.5rem; font-weight: bold;">
+              2</div>
+            <h3 style="margin-bottom: 10px;">Select Spot</h3>
+            <p style="color: var(--text-muted);">Browse real-time availability and choose your perfect spot.</p>
+          </div>
+          <div style="text-align: center;">
+            <div
+              style="width: 60px; height: 60px; background: rgba(255, 255, 255, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: white; font-size: 1.5rem; font-weight: bold;">
+              3</div>
+            <h3 style="margin-bottom: 10px;">Park Safely</h3>
+            <p style="color: var(--text-muted);">Arrive, park hassle-free, and enjoy automated billing.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="container reveal">
+      <div class="card-grid">
+        <div class="card glass-panel clickable">
+          <div
+            style="width:50px;height:50px;background:rgba(0,170,255,0.1);border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:20px;color:#00aaff;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+            </svg>
+          </div>
+          <h3>Automated Billing</h3>
+          <p>Transparent fees, automatic invoicing and payment history — billed only for actual usage.</p>
+        </div>
+        <div class="card glass-panel clickable">
+          <div
+            style="width:50px;height:50px;background:rgba(124,92,255,0.1);border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:20px;color:#7c5cff;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+            </svg>
+          </div>
+          <h3>Smart Notifications</h3>
+          <p>Live alerts for spot availability, reservation reminders and EV charger readiness.</p>
+        </div>
+        <div class="card glass-panel clickable">
+          <div
+            style="width:50px;height:50px;background:rgba(255,255,255,0.1);border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:20px;color:white;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+              <line x1="1" y1="10" x2="23" y2="10" />
+            </svg>
+          </div>
+          <h3>Club Cards</h3>
+          <p>Member & corporate club cards — discounts, consolidated billing and priority reservations.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="container reveal" style="margin-top: 60px;">
+      <div class="glass-panel"
+        style="padding: 80px 40px; text-align: center; border-radius: var(--radius-lg); position: relative; overflow: hidden;">
+        <div
+          style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at top right, rgba(124,92,255,0.1), transparent 60%); pointer-events: none;">
+        </div>
+
+        <h2 style="font-size: 2.5rem; margin-bottom: 24px; font-weight: 800;">Ready to Transform Your Parking?</h2>
+        <p style="color: var(--text-muted); max-width: 600px; margin: 0 auto 40px; font-size: 1.1rem;">
+          Thousands of users enjoy seamless parking today. Reduce congestion, save time and offer reliable EV support.
+        </p>
+        <button class="btn btn-primary" onclick="window.location.href='login.html'">Start Now</button>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="footer-links">
+        <a href="contact.html" class="footer-link">Contact</a>
+        <a href="about.html" class="footer-link">About</a>
+        <a href="termsp.html" class="footer-link">Terms & Privacy</a>
+      </div>
+      <div class="copyright">© <span id="year"></span> Smart Parking — All rights reserved.</div>
+    </div>
+  </footer>
+
+  <canvas id="flickering-grid"
+    style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none;"></canvas>
+  <script src="js/flickering-grid.js"></script>
+  <script src="js/init-grid.js"></script>
+  <script>
+    window.addEventListener('load', () => {
+      const loader = document.getElementById('loader');
+      setTimeout(() => {
+        loader.classList.add('hidden');
+        triggerAnimations();
+      }, 500);
+      document.getElementById('year').textContent = new Date().getFullYear();
+    });
+
+    function triggerAnimations() {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('active');
+          }
+        });
+      }, { threshold: 0.1 });
+
+      document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    }
+  </script>
+</body>
+
+</html>

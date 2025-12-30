@@ -325,6 +325,8 @@ header .container {
     padding: 8px;
     z-index: 101;
     position: relative;
+    pointer-events: none;
+    /* Disabled by default */
 }
 
 .mobile-menu-toggle span {
@@ -362,10 +364,14 @@ header .container {
     z-index: 99;
     opacity: 0;
     transition: opacity 0.3s ease;
+    pointer-events: none;
+    /* Disabled by default */
 }
 
 .mobile-nav-overlay.active {
     opacity: 1;
+    pointer-events: auto;
+    /* Only active when menu is open */
 }
 
 /* Mobile Navigation Menu */
@@ -384,10 +390,14 @@ header .container {
     padding: 80px 24px 24px;
     transition: right 0.3s ease;
     overflow-y: auto;
+    pointer-events: none;
+    /* Disabled by default */
 }
 
 .mobile-nav.active {
     right: 0;
+    pointer-events: auto;
+    /* Only active when menu is open */
 }
 
 .mobile-nav .nav-link {
@@ -413,6 +423,8 @@ header .container {
         flex-direction: column;
         align-items: center;
         justify-content: center;
+        pointer-events: auto;
+        /* Enable on mobile */
     }
 
     .mobile-nav-overlay,

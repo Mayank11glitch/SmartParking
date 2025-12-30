@@ -17,6 +17,7 @@
         const menuToggle = document.createElement('button');
         menuToggle.className = 'mobile-menu-toggle';
         menuToggle.setAttribute('aria-label', 'Toggle mobile menu');
+        menuToggle.setAttribute('type', 'button'); // Prevent form submission
         menuToggle.innerHTML = `
             <span></span>
             <span></span>
@@ -58,14 +59,23 @@
             }
         }
 
-        // Event listeners
-        menuToggle.addEventListener('click', toggleMenu);
-        overlay.addEventListener('click', toggleMenu);
+        // Event listeners - with proper event handling
+        menuToggle.addEventListener('click', function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+            toggleMenu();
+        }, true);
 
-        // Close menu when clicking on a link
+        overlay.addEventListener('click', function (e) {
+            e.stopPropagation();
+            toggleMenu();
+        }, true);
+
+        // Close menu when clicking on a link inside mobile nav
         const mobileLinks = mobileNav.querySelectorAll('a, .btn');
         mobileLinks.forEach(link => {
             link.addEventListener('click', () => {
+                // Don't prevent default - let the link work
                 setTimeout(toggleMenu, 100);
             });
         });

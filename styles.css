@@ -411,6 +411,14 @@ header .container {
     display: none;
 }
 
+/* Force vertical layout in mobile nav */
+.mobile-nav .nav-links {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+    align-items: stretch !important;
+}
+
 .mobile-nav .btn {
     width: 100%;
     margin-top: 16px;
@@ -1064,6 +1072,22 @@ footer {
         width: 250px;
         height: 250px;
     }
+
+    /* Reservation Layout - Stack on mobile */
+    .reservation-layout {
+        grid-template-columns: 1fr !important;
+        gap: 20px !important;
+    }
+
+    /* Header buttons - Stack vertically on very small screens */
+    header .container>div:last-child {
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+
+    header .btn {
+        width: 100%;
+    }
 }
 
 /* Mobile Devices (480px - 639px) */
@@ -1091,6 +1115,11 @@ footer {
 
     .nav-link {
         font-size: 0.9rem;
+    }
+
+    /* Reservation Layout - Stack on mobile */
+    .reservation-layout {
+        grid-template-columns: 1fr !important;
     }
 }
 
@@ -1149,6 +1178,11 @@ footer {
     .auth-card {
         max-width: 500px;
         margin: 0 auto;
+    }
+
+    /* Reservation Layout - Stack on tablet */
+    .reservation-layout {
+        grid-template-columns: 1fr !important;
     }
 }
 

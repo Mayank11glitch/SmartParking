@@ -64,9 +64,19 @@
 
     <main class="container">
         <div class="glass-panel" style="padding: 32px; border-radius:16px; margin-top:40px;">
-            <h1 style="font-size:1.8rem; margin-bottom:8px;">Transaction History</h1>
-            <p style="color:var(--text-muted);margin-bottom:32px;">Audit log of all your reservations and activities.
-            </p>
+            <div
+                style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:16px;">
+                <div>
+                    <h1 style="font-size:1.8rem; margin-bottom:8px;">Transaction History</h1>
+                    <p style="color:var(--text-muted);margin-bottom:0;">Audit log of all your reservations and
+                        activities.</p>
+                </div>
+                <button onclick="clearHistory()" class="btn btn-outline"
+                    style="padding:8px 16px;border-color:rgba(239,68,68,0.3);color:#fca5a5;">
+                    <span style="margin-right:6px;">🗑️</span> Clear History
+                </button>
+            </div>
+            <div style="height:24px;"></div>
 
             <div class="glass-panel"
                 style="padding:20px; border-radius:12px; display:flex; flex-wrap:wrap; gap:16px; align-items:center; margin-bottom:24px; background:rgba(255,255,255,0.02);">
@@ -178,6 +188,32 @@
 
         window.onload = function () {
             setTimeout(() => document.getElementById('loader').classList.add('hidden'), 500);
+            renderList();
+        };
+
+        window.clearHistory = function () {
+            if (!confirm('⚠️ Are you sure you want to clear all your reservation history?\n\nThis action cannot be undone!')) {
+                return;
+            }
+
+            const current = JSON.parse(localStorage.getItem(CURRENT_KEY) || 'null');
+            if (!current) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // Get all reservations
+            const allReservations = getReservations();
+
+            // Filter out current user's reservations (keep other users' data)
+            const otherUsersReservations = allReservations.filter(r => String(r.userId) !== String(current.id));
+
+            // Save back only other users' reservations
+            localStorage.setItem(RES_KEY, JSON.stringify(otherUsersReservations));
+
+            toast('✅ History cleared successfully');
+
+            // Re-render the list (should show empty now)
             renderList();
         };
 

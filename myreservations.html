@@ -92,9 +92,11 @@
             }, 2200);
         }
 
-        // 🔥 FIREBASE TIMER FUNCTIONS
+        // 🔥 FIREBASE REAL-TIME TIMER FUNCTIONS
+        const activeListeners = new Map(); // Track active listeners for cleanup
+
         async function fetchSlotTimerData(spotId, reservationId, timerDiv) {
-            console.log('🔍 Fetching timer data for spot:', spotId, 'reservation:', reservationId);
+            console.log('🔍 Setting up real-time listener for spot:', spotId, 'reservation:', reservationId);
             console.log('   window.database exists:', !!window.database);
 
             if (!window.database) {
@@ -113,69 +115,124 @@
 
             try {
                 console.log('📦 Importing Firebase functions...');
-                const { ref, get } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js");
+                const { ref, onValue, off } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js");
 
-                console.log('📡 Fetching slot data from Firebase...');
+                console.log('📡 Setting up real-time listener for slot data...');
                 const slotRef = ref(window.database, "slots/" + spotId);
-                const snapshot = await get(slotRef);
 
-                console.log('📊 Slot snapshot exists:', snapshot.exists());
-
-                if (!snapshot.exists()) {
-                    console.warn('⚠️ Slot not found in Firebase:', spotId);
-                    timerDiv.innerHTML = '<div style="color:var(--text-muted);font-size:0.9rem;">Slot not found</div>';
-                    return;
+                // Clean up any existing listener for this reservation
+                if (activeListeners.has(reservationId)) {
+                    const oldRef = activeListeners.get(reservationId);
+                    off(oldRef);
+                    console.log('🧹 Cleaned up old listener for:', reservationId);
                 }
 
-                const slotData = snapshot.val();
-                console.log('✅ Slot data:', slotData);
+                // Set up real-time listener
+                const unsubscribe = onValue(slotRef, (snapshot) => {
+                    console.log('🔄 Real-time update received for:', spotId);
 
-                const timerActive = slotData.timerActive || false;
-                const startTime = slotData.startTime || 0;
-                const durationMin = slotData.durationMin || 0;
-                const isBooked = slotData.booked || false;
+                    if (!snapshot.exists()) {
+                        console.warn('⚠️ Slot not found in Firebase:', spotId);
+                        timerDiv.innerHTML = '<div style="color:var(--text-muted);font-size:0.9rem;">Slot not found</div>';
+                        return;
+                    }
 
-                console.log('   isBooked:', isBooked, 'timerActive:', timerActive, 'startTime:', startTime, 'durationMin:', durationMin);
+                    const slotData = snapshot.val();
+                    console.log('✅ Slot data:', slotData);
 
-                if (!isBooked) {
-                    // Booking was cancelled
-                    console.log('❌ Booking cancelled');
-                    timerDiv.innerHTML = '<div style="color:#ef4444;font-size:0.9rem;font-weight:600;">❌ CANCELLED</div>';
-                    return;
-                }
+                    const timerActive = slotData.timerActive || false;
+                    const startTime = slotData.startTime || 0;
+                    const durationMin = slotData.durationMin || 0;
+                    const isBooked = slotData.booked || false;
 
-                if (!timerActive || startTime === 0) {
-                    // Waiting for car to arrive
-                    console.log('⏳ Waiting for car to arrive');
-                    const waitingLabel = document.createElement('div');
-                    waitingLabel.style.cssText = 'font-size:0.75rem;color:var(--text-muted);margin-bottom:4px;';
-                    waitingLabel.textContent = 'Status';
+                    console.log('   isBooked:', isBooked, 'timerActive:', timerActive, 'startTime:', startTime, 'durationMin:', durationMin);
 
-                    const waitingValue = document.createElement('div');
-                    waitingValue.style.cssText = 'font-size:0.95rem;color:#eab308;font-weight:600;';
-                    waitingValue.textContent = '⏳ Waiting for car...';
+                    if (!isBooked) {
+                        // Booking was cancelled - Generate bill and show notification
+                        console.log('❌ Booking cancelled - Generating bill');
 
-                    timerDiv.appendChild(waitingLabel);
-                    timerDiv.appendChild(waitingValue);
-                } else {
-                    // Timer is active - show countdown
-                    console.log('⏱️ Timer is active, starting countdown');
-                    const timerLabel = document.createElement('div');
-                    timerLabel.style.cssText = 'font-size:0.75rem;color:var(--text-muted);margin-bottom:4px;';
-                    timerLabel.textContent = 'Time Remaining';
+                        // Calculate parking duration and bill
+                        const currentTime = Math.floor(Date.now() / 1000);
+                        let parkedMinutes = 0;
+                        let billAmount = 0;
 
-                    const timerValue = document.createElement('div');
-                    timerValue.id = 'timer-' + reservationId;
-                    timerValue.style.cssText = 'font-size:1.2rem;font-weight:700;font-family:monospace;min-height:30px;';
+                        if (startTime > 0) {
+                            // Car was parked, calculate actual time
+                            parkedMinutes = Math.floor((currentTime - startTime) / 60);
 
-                    timerDiv.appendChild(timerLabel);
-                    timerDiv.appendChild(timerValue);
+                            // Get rate from localStorage reservation
+                            const allReservations = JSON.parse(localStorage.getItem('sp_reservations_v1') || '[]');
+                            const reservation = allReservations.find(r => r.id === reservationId);
+                            const ratePerHour = reservation ? (reservation.rate || 50) : 50;
 
-                    // Start the countdown
-                    startFirebaseTimer(reservationId, startTime, durationMin);
-                }
+                            // Calculate bill (minimum 1 hour charge)
+                            const hours = Math.max(1, Math.ceil(parkedMinutes / 60));
+                            billAmount = hours * ratePerHour;
+                        }
+
+                        // Show cancellation notification with bill
+                        showCancellationNotification(spotId, parkedMinutes, billAmount, reservationId);
+
+                        // Mark as cancelled in localStorage
+                        markReservationCancelled(reservationId, parkedMinutes, billAmount);
+
+                        timerDiv.innerHTML = '<div style="color:#ef4444;font-size:0.9rem;font-weight:600;">❌ CANCELLED</div>';
+
+                        // Clean up listener
+                        off(slotRef);
+                        activeListeners.delete(reservationId);
+
+                        // Refresh the list after 3 seconds
+                        setTimeout(() => {
+                            render();
+                        }, 3000);
+
+                        return;
+                    }
+
+                    if (!timerActive || startTime === 0) {
+                        // Waiting for car to arrive
+                        console.log('⏳ Waiting for car to arrive');
+                        const waitingLabel = document.createElement('div');
+                        waitingLabel.style.cssText = 'font-size:0.75rem;color:var(--text-muted);margin-bottom:4px;';
+                        waitingLabel.textContent = 'Status';
+
+                        const waitingValue = document.createElement('div');
+                        waitingValue.style.cssText = 'font-size:0.95rem;color:#eab308;font-weight:600;';
+                        waitingValue.textContent = '⏳ Waiting for car...';
+
+                        timerDiv.innerHTML = '';
+                        timerDiv.appendChild(waitingLabel);
+                        timerDiv.appendChild(waitingValue);
+                    } else {
+                        // Timer is active - show countdown
+                        console.log('⏱️ Timer is active, starting countdown');
+                        const timerLabel = document.createElement('div');
+                        timerLabel.style.cssText = 'font-size:0.75rem;color:var(--text-muted);margin-bottom:4px;';
+                        timerLabel.textContent = 'Time Remaining';
+
+                        const timerValue = document.createElement('div');
+                        timerValue.id = 'timer-' + reservationId;
+                        timerValue.style.cssText = 'font-size:1.2rem;font-weight:700;font-family:monospace;min-height:30px;';
+
+                        timerDiv.innerHTML = '';
+                        timerDiv.appendChild(timerLabel);
+                        timerDiv.appendChild(timerValue);
+
+                        // Start the countdown
+                        startFirebaseTimer(reservationId, startTime, durationMin);
+                    }
+                }, (error) => {
+                    console.error('❌ Firebase listener error:', error);
+                    timerDiv.innerHTML = '<div style="color:#ef4444;font-size:0.9rem;">Error loading timer</div>';
+                });
+
+                // Store listener reference for cleanup
+                activeListeners.set(reservationId, slotRef);
+                console.log('✅ Real-time listener active for:', reservationId);
+
             } catch (error) {
-                console.error('❌ Error fetching timer data:', error);
+                console.error('❌ Error setting up listener:', error);
                 console.error('   Error stack:', error.stack);
                 timerDiv.innerHTML = '<div style="color:#ef4444;font-size:0.9rem;">Error loading timer</div>';
             }
@@ -226,6 +283,36 @@
 
             // Update every second
             setInterval(tick, 1000);
+        }
+
+        // Show cancellation notification with bill
+        function showCancellationNotification(spotId, parkedMinutes, billAmount, reservationId) {
+            const hours = Math.floor(parkedMinutes / 60);
+            const minutes = parkedMinutes % 60;
+            const timeStr = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+
+            const message = billAmount > 0
+                ? `Spot ${spotId} reservation cancelled!\n\nTime Parked: ${timeStr}\nAmount Due: ₹${billAmount}\n\nPlease pay at exit.`
+                : `Spot ${spotId} reservation cancelled!\n\nCar did not arrive.`;
+
+            alert(message);
+            toast(`Reservation ${spotId} cancelled - Bill: ₹${billAmount}`);
+        }
+
+        // Mark reservation as cancelled in localStorage
+        function markReservationCancelled(reservationId, parkedMinutes, billAmount) {
+            const key = 'sp_reservations_v1';
+            const all = JSON.parse(localStorage.getItem(key) || '[]');
+            const idx = all.findIndex(r => r.id === reservationId);
+
+            if (idx !== -1) {
+                all[idx].status = 'cancelled';
+                all[idx].parkedMinutes = parkedMinutes;
+                all[idx].billAmount = billAmount;
+                all[idx].cancelledAt = new Date().toISOString();
+                localStorage.setItem(key, JSON.stringify(all));
+                console.log('✅ Reservation marked as cancelled:', reservationId);
+            }
         }
 
         const current = JSON.parse(localStorage.getItem('sp_current_user_v1') || 'null');

@@ -57,10 +57,25 @@
 
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
             <div class="form-group">
-              <label class="form-label">Duration (hours)</label>
-              <input id="hours" type="number" min="1" max="24" value="1" class="form-control" required>
+              <label class="form-label">Duration</label>
+              <select id="durationSelect" class="form-control" onchange="updateDuration()">
+                <option value="30">30 minutes</option>
+                <option value="60" selected>1 hour</option>
+                <option value="90">1.5 hours</option>
+                <option value="120">2 hours</option>
+                <option value="180">3 hours</option>
+                <option value="240">4 hours</option>
+                <option value="300">5 hours</option>
+                <option value="360">6 hours</option>
+                <option value="custom">Custom...</option>
+              </select>
             </div>
-            <div class="form-group">
+            <div class="form-group" id="customDurationDiv" style="display:none;">
+              <label class="form-label">Custom Duration (minutes)</label>
+              <input id="customMinutes" type="number" min="15" max="1440" step="15" class="form-control"
+                placeholder="e.g., 45">
+            </div>
+            <div class="form-group" id="vehicleDiv">
               <label class="form-label">Vehicle Number</label>
               <input id="vehicle" class="form-control" placeholder="MH12AB1234" required>
             </div>
@@ -78,10 +93,62 @@
 
           <div class="form-group">
             <label class="form-label">Payment Method</label>
-            <select id="payMethod" class="form-control">
-              <option>Pay at exit</option>
-              <option>UPI</option>
+            <select id="payMethod" class="form-control" onchange="handlePaymentMethodChange()">
+              <option value="pay-at-exit">Pay at exit</option>
+              <option value="upi">UPI Payment (PhonePe/GPay/Paytm)</option>
             </select>
+          </div>
+
+          <!-- UPI Payment Section -->
+          <div id="upiSection" style="display:none; margin-top:16px;">
+            <div class="glass-panel"
+              style="padding:20px; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.3); border-radius:12px;">
+              <!-- Payment Info -->
+              <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+                <div style="font-size:2rem;">💳</div>
+                <div>
+                  <div style="font-weight:600; font-size:1.1rem;">UPI Payment</div>
+                  <div style="font-size:0.85rem; color:var(--text-muted);">Pay via PhonePe, GPay, Paytm, or any UPI app
+                  </div>
+                </div>
+              </div>
+
+              <!-- Amount Display -->
+              <div style="background:rgba(255,255,255,0.1); padding:16px; border-radius:8px; margin-bottom:16px;">
+                <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:4px;">Amount to Pay</div>
+                <div style="font-size:2rem; font-weight:700; color:#22c55e;">₹<span id="upiAmount">0</span></div>
+              </div>
+
+              <!-- UPI ID Display -->
+              <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; margin-bottom:16px;">
+                <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:4px;">Pay to UPI ID</div>
+                <div style="font-weight:600; font-family:monospace; font-size:1.1rem;">9325697298@ibl</div>
+                <button type="button" onclick="copyUPIId()" class="btn btn-outline"
+                  style="margin-top:8px; padding:4px 12px; font-size:0.85rem;">
+                  📋 Copy UPI ID
+                </button>
+              </div>
+
+              <!-- Pay Button -->
+              <button type="button" class="btn btn-primary" onclick="initiateUPIPayment()"
+                style="width:100%; margin-bottom:16px;">
+                <span style="margin-right:8px;">💳</span> Pay ₹<span id="upiPayAmount">0</span> via UPI
+              </button>
+
+              <!-- Transaction ID Input -->
+              <div style="border-top:1px solid rgba(255,255,255,0.1); padding-top:16px;">
+                <div style="font-size:0.9rem; margin-bottom:8px;">
+                  ℹ️ After completing payment, enter your Transaction ID below:
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label">Transaction ID / UPI Reference Number *</label>
+                  <input id="upiTransactionId" class="form-control" placeholder="e.g., 123456789012" maxlength="20">
+                  <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">
+                    Find this in your UPI app's transaction history
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div style="display:flex;gap:12px;margin-top:24px;">
@@ -162,22 +229,149 @@
     const priceMap = { 'A101': 40, 'A102': 30, 'A103': 30, 'A104': 40, 'B201': 450, 'C302': 30 };
     function getRate(spot) { return priceMap[spot] || 500; }
 
+    // Handle duration selection
+    function updateDuration() {
+      const select = document.getElementById('durationSelect');
+      const customDiv = document.getElementById('customDurationDiv');
+      const vehicleDiv = document.getElementById('vehicleDiv');
+
+      if (select.value === 'custom') {
+        customDiv.style.display = 'block';
+        vehicleDiv.style.gridColumn = '1 / -1'; // Span full width
+      } else {
+        customDiv.style.display = 'none';
+        vehicleDiv.style.gridColumn = 'auto';
+      }
+
+      previewCalc();
+    }
+
+    // Get selected duration in minutes
+    function getDurationMinutes() {
+      const select = document.getElementById('durationSelect');
+      if (select.value === 'custom') {
+        const customMin = parseInt(document.getElementById('customMinutes').value || '0');
+        return customMin > 0 ? customMin : 60; // Default to 60 if invalid
+      }
+      return parseInt(select.value);
+    }
+
     function previewCalc() {
       const spot = (document.getElementById('spotId').value || '').trim();
       const date = document.getElementById('date').value;
       const time = document.getElementById('time').value;
-      const hours = parseInt(document.getElementById('hours').value || '1', 10);
+      const durationMin = getDurationMinutes();
       const vehicle = document.getElementById('vehicle').value || '';
-      const rate = getRate(spot);
-      const total = rate * (isNaN(hours) ? 1 : hours);
+      const ratePerHour = getRate(spot);
+
+      // Calculate based on minutes (pro-rated)
+      const hours = durationMin / 60;
+      const total = Math.ceil(ratePerHour * hours); // Round up to nearest rupee
+
+      // Format duration display
+      const durationDisplay = durationMin >= 60
+        ? `${Math.floor(durationMin / 60)}h ${durationMin % 60}m`.replace(' 0m', '')
+        : `${durationMin}m`;
 
       document.getElementById('resSpot').textContent = spot || '—';
       document.getElementById('resDate').textContent = (date ? date : '—') + (time ? ' ' + time : '');
-      document.getElementById('resHours').textContent = (hours || '—') + ' hour(s)';
+      document.getElementById('resHours').textContent = durationDisplay;
       document.getElementById('resVehicle').textContent = vehicle || '—';
-      document.getElementById('resRate').textContent = '₹' + rate + '/hr';
+      document.getElementById('resRate').textContent = '₹' + ratePerHour + '/hr';
       document.getElementById('resTotal').textContent = '₹' + total;
       toast('Price preview updated');
+
+      // Also update UPI amount if UPI is selected
+      if (document.getElementById('payMethod').value === 'upi') {
+        updateUPIAmount();
+      }
+    }
+
+    // ========== UPI PAYMENT FUNCTIONS ==========
+
+    // Show/hide UPI section based on payment method
+    function handlePaymentMethodChange() {
+      const payMethod = document.getElementById('payMethod').value;
+      const upiSection = document.getElementById('upiSection');
+
+      if (payMethod === 'upi') {
+        upiSection.style.display = 'block';
+        updateUPIAmount();
+      } else {
+        upiSection.style.display = 'none';
+      }
+    }
+
+    // Update UPI amount display
+    function updateUPIAmount() {
+      const spot = document.getElementById('spotId').value.trim();
+      const durationMin = getDurationMinutes();
+      const ratePerHour = getRate(spot);
+      const hours = durationMin / 60;
+      const total = Math.ceil(ratePerHour * hours);
+
+      document.getElementById('upiAmount').textContent = total;
+      document.getElementById('upiPayAmount').textContent = total;
+    }
+
+    // Copy UPI ID to clipboard
+    function copyUPIId() {
+      const upiId = '9325697298@ibl';
+      navigator.clipboard.writeText(upiId).then(() => {
+        toast('✅ UPI ID copied to clipboard!');
+      }).catch(() => {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = upiId;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        toast('✅ UPI ID copied!');
+      });
+    }
+
+    // Generate UPI payment link
+    function generateUPILink(amount, transactionNote) {
+      const upiId = '9325697298@ibl'; // ⚠️ REPLACE WITH YOUR ACTUAL UPI ID
+      const name = 'Smart Parking';
+
+      // UPI Deep Link Format (works with all UPI apps)
+      const upiUrl = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(name)}&am=${amount}&cu=INR&tn=${encodeURIComponent(transactionNote)}`;
+
+      return upiUrl;
+    }
+
+    // Initiate UPI payment
+    function initiateUPIPayment() {
+      const spot = document.getElementById('spotId').value.trim();
+      const durationMin = getDurationMinutes();
+      const ratePerHour = getRate(spot);
+      const hours = durationMin / 60;
+      const total = Math.ceil(ratePerHour * hours);
+
+      if (!spot) {
+        toast('⚠️ Please select a parking spot first');
+        return;
+      }
+
+      const transactionNote = `Parking ${spot} - ${durationMin}min`;
+      const upiLink = generateUPILink(total, transactionNote);
+
+      // Try to open UPI app
+      const opened = window.open(upiLink, '_blank');
+
+      if (!opened) {
+        // Fallback: try location.href
+        window.location.href = upiLink;
+      }
+
+      toast('💳 Opening UPI app for payment...');
+
+      // Show instruction after a moment
+      setTimeout(() => {
+        alert('📱 Complete the payment in your UPI app, then return here and enter the Transaction ID to confirm your reservation.');
+      }, 1000);
     }
 
     function saveReservation(res) {
@@ -194,7 +388,9 @@
         if (r.spot.toLowerCase() !== spot.toLowerCase()) continue;
         if (r.date !== date) continue;
         const existsS = Date.parse(r.date + 'T' + r.time);
-        const existsE = existsS + (r.hours || 1) * 3600000;
+        // Support both durationMin (new) and hours (old) formats
+        const durationMs = r.durationMin ? r.durationMin * 60000 : (r.hours || 1) * 3600000;
+        const existsE = existsS + durationMs;
         if (startEpoch < existsE && existsS < endEpoch) return r;
       }
       return null;
@@ -206,21 +402,43 @@
       const spot = document.getElementById('spotId').value.trim();
       const date = document.getElementById('date').value;
       const time = document.getElementById('time').value;
-      const hours = parseInt(document.getElementById('hours').value, 10);
+      const durationMin = getDurationMinutes(); // Get duration in minutes
       const vehicle = document.getElementById('vehicle').value.trim();
       const floor = document.getElementById('floor').value;
       const payMethod = document.getElementById('payMethod').value;
 
       if (!spot || !date || !time || !vehicle) return toast('Please fill all fields');
 
+      // Validate custom duration
+      if (document.getElementById('durationSelect').value === 'custom' && durationMin < 15) {
+        return toast('Minimum duration is 15 minutes');
+      }
+
+      // UPI Payment Validation
+      if (payMethod === 'upi') {
+        const transactionId = document.getElementById('upiTransactionId').value.trim();
+
+        if (!transactionId) {
+          alert('⚠️ Please complete UPI payment first and enter the Transaction ID');
+          return;
+        }
+
+        if (transactionId.length < 8) {
+          alert('⚠️ Please enter a valid Transaction ID (minimum 8 characters)');
+          return;
+        }
+      }
+
       const sEpoch = Date.parse(date + 'T' + time);
-      const eEpoch = sEpoch + hours * 3600000;
+      const eEpoch = sEpoch + durationMin * 60000; // Convert minutes to milliseconds
 
       const conflict = hasConflict(spot, date, sEpoch, eEpoch);
       if (conflict) return alert('Conflict: Spot occupied by ' + (conflict.userName || 'someone'));
 
-      const rate = getRate(spot);
-      const total = rate * hours;
+      const ratePerHour = getRate(spot);
+      const hours = durationMin / 60;
+      const total = Math.ceil(ratePerHour * hours);
+
       const res = {
         id: 'res_' + Date.now(),
         userId: current.id,
@@ -228,14 +446,26 @@
         spot,
         date,
         time,
-        hours,
+        durationMin: durationMin,  // Store in minutes
+        hours: hours,              // Store decimal hours for compatibility
         vehicle,
         floor,
-        rate,
+        rate: ratePerHour,
         total,
         payMethod,
         created: new Date().toISOString()
       };
+
+      // Add UPI payment details if UPI was selected
+      if (payMethod === 'upi') {
+        const transactionId = document.getElementById('upiTransactionId').value.trim();
+        res.upiTransactionId = transactionId;
+        res.paymentStatus = 'paid';
+        res.paymentMethod = 'UPI';
+      } else {
+        res.paymentStatus = 'pending';
+        res.paymentMethod = 'Pay at Exit';
+      }
 
       // Save to localStorage for backward compatibility
       saveReservation(res);
@@ -285,16 +515,16 @@
 
             // 1️⃣ Mark slot as BOOKED (not occupied yet - waiting for car)
             console.log('1️⃣ Marking slot as booked...');
-            const durationMin = hours * 60; // Convert hours to minutes
+            console.log('   Duration (minutes):', res.durationMin);
             await update(slotRef, {
               booked: true,
               occupied: false,  // Will be set to true by ESP32 when car detected
               userId: uid,
-              durationMin: durationMin,
+              durationMin: res.durationMin,  // Use actual minutes from reservation
               startTime: 0,  // ESP32 will set this when car arrives
               timerActive: false  // ESP32 will activate when car detected
             });
-            console.log('✅ Slot marked as booked');
+            console.log('✅ Slot marked as booked with', res.durationMin, 'minutes');
 
             // 2️⃣ Save booking to Firebase
             console.log('2️⃣ Creating booking record...');

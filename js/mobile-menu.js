@@ -37,6 +37,22 @@
         const navLinksClone = navLinks.cloneNode(true);
         mobileNav.appendChild(navLinksClone);
 
+        // Handle Theme Toggle in Mobile Menu
+        const mobileThemeBtn = mobileNav.querySelector('#themeToggleBtn');
+        if (mobileThemeBtn) {
+            mobileThemeBtn.id = 'themeToggleBtn_mobile';
+
+            // Register with globally exposed ThemeManager if available
+            if (window.ThemeManager) {
+                window.ThemeManager.registerButton(mobileThemeBtn);
+            } else {
+                // Fallback if ThemeManager isn't ready
+                document.addEventListener('DOMContentLoaded', () => {
+                    if (window.ThemeManager) window.ThemeManager.registerButton(mobileThemeBtn);
+                });
+            }
+        }
+
         // Insert into DOM
         const container = header.querySelector('.container');
         container.appendChild(menuToggle);

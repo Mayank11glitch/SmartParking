@@ -46,6 +46,11 @@
             <div style="display:flex;gap:12px;">
                 <button class="btn btn-outline" onclick="window.location.href='dashboard.html'">Dashboard</button>
                 <button class="btn btn-outline" onclick="logout()">Logout</button>
+                <button id="themeToggleBtn" class="btn btn-outline"
+                    style="border-radius:50%; padding:8px; width:40px; height:40px; display:inline-flex; align-items:center; justify-content:center;"
+                    aria-label="Toggle Theme">
+                    <!-- Icon will be injected by theme.js -->
+                </button>
             </div>
         </div>
     </header>
@@ -59,11 +64,11 @@
                     <p style="color:var(--text-muted);">Manage your upcoming and past bookings.</p>
                 </div>
                 <div style="color:var(--text-muted);font-size:0.9rem;">Total: <strong id="totalCount"
-                        style="color:white">0</strong></div>
+                        style="color:var(--text-main)">0</strong></div>
             </div>
 
             <div class="glass-panel"
-                style="padding:16px; border-radius:12px; display:flex; gap:12px; margin-bottom:24px; background:rgba(255,255,255,0.02);">
+                style="padding:16px; border-radius:12px; display:flex; gap:12px; margin-bottom:24px; background:var(--input-bg);">
                 <input id="q" class="form-control" placeholder="Search by spot, date, vehicle..." style="flex:1;">
                 <select id="filterStatus" class="form-control" style="width:auto;min-width:140px;">
                     <option value="all">All</option>
@@ -198,7 +203,7 @@
                         waitingLabel.textContent = 'Status';
 
                         const waitingValue = document.createElement('div');
-                        waitingValue.style.cssText = 'font-size:0.95rem;color:#eab308;font-weight:600;';
+                        waitingValue.style.cssText = 'font-size:0.95rem;color:var(--color-warning);font-weight:600;';
                         waitingValue.textContent = '⏳ Waiting for car...';
 
                         timerDiv.innerHTML = '';
@@ -403,7 +408,7 @@
 
                 const cancelBtn = document.createElement('button');
                 cancelBtn.className = 'btn btn-outline';
-                cancelBtn.style.cssText = 'padding:8px 16px;font-size:0.9rem;border-color:rgba(239,68,68,0.3);color:#fca5a5;';
+                cancelBtn.style.cssText = 'padding:8px 16px;font-size:0.9rem;border-color:rgba(239,68,68,0.3);color:var(--color-danger);';
                 cancelBtn.textContent = 'Cancel';
                 cancelBtn.onclick = function () { cancelReservation(r.id); };
 
@@ -586,6 +591,7 @@
     <script src="js/flickering-grid.js"></script>
     <script src="js/init-grid.js"></script>
     <script src="js/mobile-menu.js"></script>
+    <script src="js/theme.js"></script>
 </body>
 
 </html>

@@ -27,6 +27,11 @@
       <div style="display:flex;gap:12px;">
         <button class="btn btn-outline" onclick="window.location.href='dashboard.html'">Back</button>
         <button class="btn btn-outline" onclick="logout()">Logout</button>
+        <button id="themeToggleBtn" class="btn btn-outline"
+          style="border-radius:50%; padding:8px; width:40px; height:40px; display:inline-flex; align-items:center; justify-content:center;"
+          aria-label="Toggle Theme">
+          <!-- Icon will be injected by theme.js -->
+        </button>
       </div>
     </div>
   </header>
@@ -114,9 +119,10 @@
               </div>
 
               <!-- Amount Display -->
-              <div style="background:rgba(255,255,255,0.1); padding:16px; border-radius:8px; margin-bottom:16px;">
+              <div style="background:var(--input-bg); padding:16px; border-radius:8px; margin-bottom:16px;">
                 <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:4px;">Amount to Pay</div>
-                <div style="font-size:2rem; font-weight:700; color:#22c55e;">₹<span id="upiAmount">0</span></div>
+                <div style="font-size:2rem; font-weight:700; color:var(--color-success);">₹<span id="upiAmount">0</span>
+                </div>
               </div>
 
               <!-- UPI ID Display -->
@@ -158,23 +164,24 @@
         </form>
 
         <!-- Summary -->
-        <div class="glass-panel" style="padding:24px; border-radius:12px; background:rgba(255,255,255,0.02);">
+        <div class="glass-panel" style="padding:24px; border-radius:12px; background:var(--input-bg);">
           <h3 style="margin-bottom:16px;">Summary</h3>
           <div style="display:flex;flex-direction:column;gap:12px;font-size:0.95rem;color:var(--text-muted);">
             <div style="display:flex;justify-content:space-between;"><span>User:</span> <strong id="resUser"
-                style="color:white">—</strong></div>
+                style="color:var(--text-main)">—</strong></div>
             <div style="display:flex;justify-content:space-between;"><span>Spot:</span> <strong id="resSpot"
-                style="color:white">—</strong></div>
+                style="color:var(--text-main)">—</strong></div>
             <div style="display:flex;justify-content:space-between;"><span>Date:</span> <strong id="resDate"
-                style="color:white">—</strong></div>
+                style="color:var(--text-main)">—</strong></div>
             <div style="display:flex;justify-content:space-between;"><span>Dur:</span> <strong id="resHours"
-                style="color:white">—</strong></div>
+                style="color:var(--text-main)">—</strong></div>
             <div style="display:flex;justify-content:space-between;"><span>Vehicle:</span> <strong id="resVehicle"
-                style="color:white">—</strong></div>
+                style="color:var(--text-main)">—</strong></div>
             <div style="height:1px;background:var(--card-border);margin:8px 0;"></div>
             <div style="display:flex;justify-content:space-between;"><span>Rate:</span> <strong id="resRate"
-                style="color:white">₹0/hr</strong></div>
-            <div style="display:flex;justify-content:space-between;font-size:1.2rem;color:white;margin-top:8px;">
+                style="color:var(--text-main)">₹0/hr</strong></div>
+            <div
+              style="display:flex;justify-content:space-between;font-size:1.2rem;color:var(--text-main);margin-top:8px;">
               <span>Total:</span> <strong id="resTotal">₹0</strong>
             </div>
           </div>
@@ -596,6 +603,7 @@
   <script src="js/flickering-grid.js"></script>
   <script src="js/init-grid.js"></script>
   <script src="js/mobile-menu.js"></script>
+  <script src="js/theme.js"></script>
 
   <script type="module">
     // 🔥 Firebase Initialization for Reservation System

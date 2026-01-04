@@ -22,6 +22,11 @@
       <nav class="nav-links">
         <a href="index.html" class="nav-link">Home</a>
         <button class="btn btn-outline" onclick="window.location.href='login.html'">Log In</button>
+        <button id="themeToggleBtn" class="btn btn-outline"
+          style="border-radius:50%; padding:8px; width:40px; height:40px; display:inline-flex; align-items:center; justify-content:center; margin-left:8px;"
+          aria-label="Toggle Theme">
+          <!-- Icon will be injected by theme.js -->
+        </button>
       </nav>
     </div>
   </header>
@@ -32,7 +37,7 @@
     <section class="split-section">
       <div>
         <div
-          style="display:inline-block;padding:8px 16px;background:rgba(255,255,255,0.1);border-radius:20px;margin-bottom:20px;font-size:0.9rem;font-weight:600;color:#7c5cff">
+          style="display:inline-block;padding:8px 16px;background:rgba(255,255,255,0.1);border-radius:20px;margin-bottom:20px;font-size:0.9rem;font-weight:600;color:var(--color-info)">
           About Us</div>
         <h1>We make parking <span class="text-gradient">effortless</span></h1>
         <p class="hero-lead" style="margin:20px 0 30px;text-align:left;">
@@ -57,7 +62,7 @@
       </div>
 
       <div class="card glass-panel" style="justify-content:center;">
-        <h3 style="color:#7c5cff;margin-bottom:16px;">Our Mission</h3>
+        <h3 style="color:var(--color-info);margin-bottom:16px;">Our Mission</h3>
         <p style="font-size:1.1rem;line-height:1.7;">
           To simplify parking through intelligent automation, real-time data, and secure digital systems that create a
           stress-free travel experience.
@@ -109,6 +114,7 @@
   <script src="js/flickering-grid.js"></script>
   <script src="js/init-grid.js"></script>
   <script src="js/mobile-menu.js"></script>
+  <script src="js/theme.js"></script>
 </body>
 
 </html>

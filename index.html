@@ -31,37 +31,53 @@
       </div>
       <nav class="nav-links">
         <button class="btn btn-outline" onclick="window.location.href='login.html'">Log In</button>
+        <button id="themeToggleBtn" class="btn btn-outline"
+          style="border-radius:50%; padding:8px; width:40px; height:40px; display:inline-flex; align-items:center; justify-content:center; margin-left:8px;"
+          aria-label="Toggle Theme">
+          <!-- Icon will be injected by theme.js -->
+        </button>
       </nav>
     </div>
   </header>
 
   <main>
     <section class="hero reveal">
-      <div class="container">
-        <div style="display:flex; justify-content:center; gap:12px; flex-wrap:wrap; margin-bottom:24px;"></div>
-        <div
-          style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;background:rgba(255,255,255,0.05);border-radius:20px;border:1px solid rgba(255,255,255,0.1);">
-          <span style="font-size:1.1rem;">📱</span>
-          <span style="font-size:0.9rem;font-weight:500;">App Integration</span>
+      <div class="container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center;">
+        <div class="hero-content">
+          <div style="display:flex; justify-content:flex-start; gap:12px; flex-wrap:wrap; margin-bottom:24px;">
+            <div
+              style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;background:rgba(255,255,255,0.05);border-radius:20px;border:1px solid rgba(255,255,255,0.1);">
+              <span style="font-size:1.1rem;">📱</span>
+              <span style="font-size:0.9rem;font-weight:500;">App Integration</span>
+            </div>
+            <div
+              style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;background:rgba(255,255,255,0.05);border-radius:20px;border:1px solid rgba(255,255,255,0.1);">
+              <span style="font-size:1.1rem;">⚡</span>
+              <span style="font-size:0.9rem;font-weight:500;">Real-Time Data</span>
+            </div>
+            <div
+              style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;background:rgba(255,255,255,0.05);border-radius:20px;border:1px solid rgba(255,255,255,0.1);">
+              <span style="font-size:1.1rem;">🛡️</span>
+              <span style="font-size:0.9rem;font-weight:500;">Secure Parking</span>
+            </div>
+          </div>
+          <h1 style="font-size: 3.5rem; line-height: 1.1; margin-bottom: 20px;">
+            Park Smart, <span class="text-gradient">Live Better</span>
+          </h1>
+          <p class="hero-lead" style="font-size: 1.1rem; max-width: 90%; margin-left: 0;">
+            Real-time parking availability, seamless reservations, and EV charging — built for modern cities. Experience
+            the future of parking today.
+          </p>
+          <button class="btn btn-primary" onclick="window.location.href='login.html'">Get Started <span
+              style="margin-left:5px">→</span></button>
         </div>
-        <div
-          style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;background:rgba(255,255,255,0.05);border-radius:20px;border:1px solid rgba(255,255,255,0.1);">
-          <span style="font-size:1.1rem;">⚡</span>
-          <span style="font-size:0.9rem;font-weight:500;">Real-Time Data</span>
+        <div class="hero-image" style="position: relative;">
+          <div
+            style="position: absolute; inset: 0; background: var(--primary-gradient); filter: blur(80px); opacity: 0.3; z-index: -1; border-radius: 50%;">
+          </div>
+          <img src="hero-poster.png" alt="Futuristic Parking"
+            style="width: 100%; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); transform: perspective(1000px) rotateY(-5deg); transition: transform 0.3s ease;">
         </div>
-        <div
-          style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;background:rgba(255,255,255,0.05);border-radius:20px;border:1px solid rgba(255,255,255,0.1);">
-          <span style="font-size:1.1rem;">🛡️</span>
-          <span style="font-size:0.9rem;font-weight:500;">Secure Parking</span>
-        </div>
-      </div>
-      <h1>
-        Park Smart, <span class="text-gradient">Live Better</span>
-      </h1>
-      <p class="hero-lead">
-        Real-time parking availability, seamless reservations, and EV charging — built for modern cities.
-      </p>
-      <button class="btn btn-primary" onclick="window.location.href='login.html'">Get Started</button>
       </div>
     </section>
 
@@ -134,6 +150,72 @@
       </div>
     </section>
 
+    <!-- Feature Showcase -->
+    <section class="container reveal" style="margin-top: 80px;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; margin-bottom: 80px;">
+        <div style="order: 2;">
+          <div style="position: relative;">
+            <div
+              style="position: absolute; inset: -20px; background: rgba(0, 210, 255, 0.2); filter: blur(40px); z-index: -1; border-radius: 50%;">
+            </div>
+            <img src="feature-analytics.png" alt="Analytics Dashboard"
+              style="width: 100%; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 15px 35px rgba(0,0,0,0.4);">
+          </div>
+        </div>
+        <div style="order: 1;">
+          <h2 style="font-size: 2.5rem; margin-bottom: 20px;">Real-Time <span class="text-gradient">Analytics</span>
+          </h2>
+          <p style="color: var(--text-muted); font-size: 1.1rem; margin-bottom: 24px;">
+            Gain deep insights into parking trends, occupancy rates, and revenue streams with our advanced analytics
+            dashboard. Visualize data like never before.
+          </p>
+          <ul style="display: grid; gap: 12px; margin-bottom: 24px;">
+            <li style="display: flex; gap: 12px; align-items: center; color: var(--text-muted);">
+              <span style="color: var(--neon-blue);">✓</span> Live Occupancy Tracking
+            </li>
+            <li style="display: flex; gap: 12px; align-items: center; color: var(--text-muted);">
+              <span style="color: var(--neon-blue);">✓</span> Revenue Projections
+            </li>
+            <li style="display: flex; gap: 12px; align-items: center; color: var(--text-muted);">
+              <span style="color: var(--neon-blue);">✓</span> User Behavior Analysis
+            </li>
+          </ul>
+          <button class="btn btn-outline">Explore Dashboard</button>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center;">
+        <div>
+          <div style="position: relative;">
+            <div
+              style="position: absolute; inset: -20px; background: rgba(188, 19, 254, 0.2); filter: blur(40px); z-index: -1; border-radius: 50%;">
+            </div>
+            <img src="feature-security.png" alt="Secure Parking"
+              style="width: 100%; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 15px 35px rgba(0,0,0,0.4);">
+          </div>
+        </div>
+        <div>
+          <h2 style="font-size: 2.5rem; margin-bottom: 20px;">Unmatched <span class="text-gradient">Security</span></h2>
+          <p style="color: var(--text-muted); font-size: 1.1rem; margin-bottom: 24px;">
+            Your vehicle's safety is our priority. With AI-driven surveillance, license plate recognition, and 24/7
+            monitoring, peace of mind is guaranteed.
+          </p>
+          <ul style="display: grid; gap: 12px; margin-bottom: 24px;">
+            <li style="display: flex; gap: 12px; align-items: center; color: var(--text-muted);">
+              <span style="color: var(--neon-purple);">✓</span> AI Surveillance
+            </li>
+            <li style="display: flex; gap: 12px; align-items: center; color: var(--text-muted);">
+              <span style="color: var(--neon-purple);">✓</span> Automated Barriers
+            </li>
+            <li style="display: flex; gap: 12px; align-items: center; color: var(--text-muted);">
+              <span style="color: var(--neon-purple);">✓</span> Instant Alerts
+            </li>
+          </ul>
+          <button class="btn btn-outline">Learn More</button>
+        </div>
+      </div>
+    </section>
+
     <section class="container reveal" style="margin-top: 60px;">
       <div class="glass-panel"
         style="padding: 80px 40px; text-align: center; border-radius: var(--radius-lg); position: relative; overflow: hidden;">
@@ -164,8 +246,10 @@
   <canvas id="flickering-grid"
     style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none;"></canvas>
   <script src="js/flickering-grid.js"></script>
+  <script src="js/flickering-grid.js"></script>
   <script src="js/init-grid.js"></script>
   <script src="js/mobile-menu.js"></script>
+  <script src="js/theme.js"></script>
   <script>
     window.addEventListener('load', () => {
       const loader = document.getElementById('loader');
